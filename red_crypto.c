@@ -67,12 +67,12 @@ void crypto_process_record_user(uint16_t keycode, keyrecord_t *record, const uin
             // TODO: write all ASCII printable keys
             // may be not printable, because we can use any byte of ASCII with QMK, HA-HA
             // transcode_keycode_to_ascii();
-            case KC_1:
-                if (record->event.pressed) {
-                    readed_key[count_char_key] = ASCII_LOW_1;
-                    count_char_key++;
-                }
-                break;
+            // case KC_1:
+            //     if (record->event.pressed) {
+            //         readed_key[count_char_key] = ASCII_LOW_1;
+            //         count_char_key++;
+            //     }
+            //     break;
             case GET_PASS:
                 if (record->event.pressed) {
                     crypto_mode    = 0;
@@ -80,6 +80,7 @@ void crypto_process_record_user(uint16_t keycode, keyrecord_t *record, const uin
                     decrypt_pass_kuzn(encrypted_passwords);
                 }
             default:
+                kc_to_ascii(keycode, record, &readed_key);
                 break;
         }
     } else {
