@@ -6,7 +6,7 @@
 #ifndef KC_TO_ASCII_H
 #define KC_TO_ASCII_H
 
-uint8_t kc_to_ascii(uint16_t keycode, keyrecord_t *record, uint8_t readed_key[32]);
+uint8_t kc_to_ascii(uint16_t keycode, keyrecord_t *record, uint8_t readed_key[], uint8_t *count_char_key);
 
 /****************************** ASCII TABLE ******************************/
 
@@ -107,9 +107,9 @@ uint8_t kc_to_ascii(uint16_t keycode, keyrecord_t *record, uint8_t readed_key[32
 #define ASCII_UP_X          0x58        // X
 #define ASCII_UP_Y          0x59        // Y
 #define ASCII_UP_Z          0x5A        // Z
-#define ASCII_LEFT_BRACKET  0x5B        // (
+#define ASCII_LOW_LEFT_BR   0x5B        // [
 #define ASCII_LOW_BACKSLASH 0x5C        /* \        */
-#define ASCII_RIGHT_BRACKET 0x5D        // )
+#define ASCII_LOW_RIGHT_BR  0x5D        // ]
 #define ASCII_UP_6          0x5E        // ^
 #define ASCII_UP_MINUS      0x5F        // _
 
@@ -141,10 +141,10 @@ uint8_t kc_to_ascii(uint16_t keycode, keyrecord_t *record, uint8_t readed_key[32
 #define ASCII_LOW_X         0x78        // x
 #define ASCII_LOW_Y         0x79        // y
 #define ASCII_LOW_Z         0x7A        // z
-#define ASCII_UP_LEFT_BR    0x7B        // @
-#define ASCII_UP_BACKSLAH   0x7C        // @
-#define ASCII_UP_RIGHT_BR   0x7D        // @
-#define ASCII_LOW_HASH      0x7E        // ~
+#define ASCII_UP_LEFT_BR    0x7B        // {
+#define ASCII_UP_BACKSLASH  0x7C        // |
+#define ASCII_UP_RIGHT_BR   0x7D        // }
+#define ASCII_UP_HASH       0x7E        // ~
 #define ASCII_DEL           0x7F        // DEL
 
 

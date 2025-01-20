@@ -26,6 +26,13 @@ void print_chars(uint8_t *c) {
     dprintf("\n");
 };
 
+void print_int(uint8_t *c) {
+    for (uint8_t i = 0; i < 32; i++) {
+        printf("%d", c[i]);
+    }
+    dprintf("\n");
+};
+
 void decrypt_pass_kuzn(const uint8_t encrypted_passwords[2][16]) {
     kuz_key_t key;
     w128_t    x;
@@ -78,12 +85,13 @@ uint8_t crypto_process_record_user(uint16_t keycode, keyrecord_t *record, const 
             //     break;
             case RED_CRY_M:
                 if (record->event.pressed) {
+                    print_int(readed_key);
                     crypto_mode    = 0;
                     count_char_key = 0;
                     decrypt_pass_kuzn(encrypted_passwords);
                 }
             default:
-                return kc_to_ascii(keycode, record, readed_key, count_char_key);
+                return kc_to_ascii(keycode, record, readed_key, &count_char_key);
                 break;
         }
     } else {
