@@ -66,7 +66,10 @@ const uint8_t encrypted_passwords[2][16] = { {0,0,0,...,0,0,0}, {0,0,0,...,0,0,0
 8. Copy this string to function **process_record_user** in **keymap.c** before all your code. It uses "switch case" construction inside. 
 
 ```c
-    crypto_process_record_user(keycode, event, encrypted_passwords);
+    uint8_t crypto_return = crypto_process_record_user(keycode, event, encrypted_passwords);
+    if (crypto_return == 1){
+        return false;
+    }
 ```
 
 9. Compile and flash your keyboard.
