@@ -14,15 +14,13 @@
 // #endif
 #ifdef USE_RED_KUZNECHIK_8
 #include "kuznechik_8bit.h"
+#include "sha256.h"
 #endif
 
 #ifdef USE_RED_AES_256
 #include "aes.h"
 #endif
 
-#ifdef USE_RED_SHA_256
-#include "sha256.h"
-#endif
 
 
 enum red_crypto_keys {
