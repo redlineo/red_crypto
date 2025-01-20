@@ -32,7 +32,8 @@ include keyboards/<keyboard>/<path to your keymap folder>/red_crypto/red_crypto.
 
 5. Encrypt your passwords with chosen algorithm (AES, Kuznechik). Now available only Kuznechik. You can use `CyberChef`. Don't use web version! We are here for security, right? Choose `GOST Cipher`, then choose type `Kuznechik 34.12-2014`, not Magma. Choose mode ECB. Now, there is no CBC or CTR. 
 
-> Don't forget IV for GOST, get it from kuznechik_8bit.c.
+> Don't forget IV for GOST
+> ```94208510C2C001FB01C0C21085209401```
 
 6. Add your encrypted passwords in "keymap.c". Now you can encrypt 2 passwords with length <=16 byte. Keep this information in secret. Even if there are no plaintext. 
 

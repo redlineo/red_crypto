@@ -1,6 +1,6 @@
+// Author: redlineo, romanov.pd@gmail.com
+
 #include "red_crypto.h"
-
-
 
 uint8_t dec_pass[2][16] = {{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}, {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}};
 
@@ -46,6 +46,11 @@ void decrypt_pass_kuzn(const uint8_t encrypted_passwords[2][16]) {
         }
     }
 
+};
+
+// TODO: add encrypt new passwords with binding on new keys
+// and storing all these to EEPROM
+// void encrypt_pass_kuzn(){
     // kuz_set_encrypt_key(&key,readed_key);
     // for (uint8_t i=0; i<16; i++) {
     //     x.b[i] = pass[i];
@@ -53,7 +58,7 @@ void decrypt_pass_kuzn(const uint8_t encrypted_passwords[2][16]) {
     // kuz_encrypt_block(&key,&x);
     // printf("encrypted\t="); print_w128(&x);
     // print_chars_w128(&x);
-};
+// }
 
 void send_chars_pass(uint8_t *out) {
     for (uint8_t i = 0; i < 16 && out[i] != 0; i++) {
@@ -61,26 +66,24 @@ void send_chars_pass(uint8_t *out) {
     }
 };
 
-void crypto_process_record_user(uint16_t keycode, keyrecord_t *record, const uint8_t encrypted_passwords[2][16]) {
+uint8_t crypto_process_record_user(uint16_t keycode, keyrecord_t *record, const uint8_t encrypted_passwords[2][16]) {
     if (crypto_mode) {
         switch (keycode) {
-            // TODO: write all ASCII printable keys
-            // may be not printable, because we can use any byte of ASCII with QMK, HA-HA
-            // transcode_keycode_to_ascii();
             // case KC_1:
             //     if (record->event.pressed) {
             //         readed_key[count_char_key] = ASCII_LOW_1;
             //         count_char_key++;
             //     }
+            //     return 1;
             //     break;
-            case GET_PASS:
+            case RED_CRY_M:
                 if (record->event.pressed) {
                     crypto_mode    = 0;
                     count_char_key = 0;
                     decrypt_pass_kuzn(encrypted_passwords);
                 }
             default:
-                kc_to_ascii(keycode, record, &readed_key);
+                return kc_to_ascii(keycode, record, readed_key, count_char_key);
                 break;
         }
     } else {
@@ -88,41 +91,40 @@ void crypto_process_record_user(uint16_t keycode, keyrecord_t *record, const uin
             case RED_PASS1:
                 if (record->event.pressed) {
                     send_chars_pass(dec_pass[0]);
-                    // SEND_STRING(dec_pass[0]);
                 }
                 break;
             case RED_PASS2:
                 if (record->event.pressed) {
                     send_chars_pass(dec_pass[1]);
-                    // SEND_STRING(dec_pass[1]);
                 }
                 break;
             case RED_RNG:
                 if (record->event.pressed) {
-                    //TODO: change seed
-                    for (uint8_t i = 0; i < 32; i++){
+                    // TODO: change seed
+                    for (uint8_t i = 0; i < 32; i++) {
                         tap_random_base64();
                     }
                 }
                 break;
             case RED_TEST:
-                #ifdef TEST_FUNCTIONS_ENABLED
+#ifdef TEST_FUNCTIONS_ENABLED
                 if (record->event.pressed) {
                     exec_sha256_test();
                     exec_kuznechik_test();
                     exec_aes_test();
                 }
-                #endif
+#endif
                 break;
-            case GET_PASS:
+            case RED_CRY_M:
                 if (record->event.pressed) {
                     crypto_mode = 1;
                     for (uint8_t i = 0; i < 32; i++) {
                         readed_key[i] = 0;
                     }
-                    dprintf("%d", keycode);
+                    // dprintf("%d", keycode);
                 }
                 break;
         }
     }
+    return 0;
 }

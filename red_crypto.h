@@ -1,4 +1,4 @@
-
+// Author: redlineo, romanov.pd@gmail.com
 
 #include QMK_KEYBOARD_H
 #include "quantum.h"
@@ -7,7 +7,7 @@
 #ifndef RED_CRYPTO_H
 #define RED_CRYPTO_H
 
-#include "ascii_table.c"
+#include "kc_to_ascii.h"
 
 // #ifdef USE_RED_KUZNECHIK_128
 // #include "kuznechik_128bit.h"
@@ -26,14 +26,14 @@
 
 
 enum red_crypto_keys {
-    GET_PASS = SAFE_RANGE,
+    RED_CRY_M = SAFE_RANGE+0x80,     // added safe range offset
     RED_PASS1,
     RED_PASS2,
     RED_RNG,
     RED_TEST
 };
 
-void crypto_process_record_user(uint16_t keycode, keyrecord_t *record, const uint8_t encrypted_passwords[2][16]);
+uint8_t crypto_process_record_user(uint16_t keycode, keyrecord_t *record, const uint8_t encrypted_passwords[2][16]);
 
 
 #endif

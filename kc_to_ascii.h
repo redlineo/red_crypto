@@ -1,8 +1,16 @@
+// Author: redlineo, romanov.pd@gmail.com
+
+#include QMK_KEYBOARD_H
+#include "quantum.h"
+
 #ifndef KC_TO_ASCII_H
 #define KC_TO_ASCII_H
 
+uint8_t kc_to_ascii(uint16_t keycode, keyrecord_t *record, uint8_t readed_key[32]);
+
 /****************************** ASCII TABLE ******************************/
 
+// clang-format off
 #define ASCII_NON_PRINTABLE 0x00        //
 #define ASCII_SOH           0x01        //
 #define ASCII_STX           0x02        //
