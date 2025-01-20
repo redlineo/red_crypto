@@ -13,7 +13,7 @@ uint8_t crypto_mode = 0;
 void print_chars_w128(w128_t *x) {
     for (uint8_t i = 0; i < 16; i++) {
         if (x->b[i] == 0x00) break;
-        printf("%c", x->b[i]);
+        dprintf("%c", x->b[i]);
     }
     dprintf("\n");
 };
@@ -21,14 +21,14 @@ void print_chars_w128(w128_t *x) {
 void print_chars(uint8_t *c) {
     for (uint8_t i = 0; i < 32; i++) {
         if (c[i] == 0x00) break;
-        printf("%c", c[i]);
+        dprintf("%c", c[i]);
     }
     dprintf("\n");
 };
 
 void print_int(uint8_t *c) {
     for (uint8_t i = 0; i < 32; i++) {
-        printf("%d", c[i]);
+        dprintf("%d", c[i]);
     }
     dprintf("\n");
 };
@@ -44,9 +44,11 @@ void decrypt_pass_kuzn(const uint8_t encrypted_passwords[2][16]) {
         }
         kuz_decrypt_block(&key, &x);
 
+        #ifdef USE_RED_CRY_DEBUG
         dprintf("decrypted\t=");
         print_w128(&x);
         print_chars_w128(&x);
+        #endif
 
         for (uint8_t i = 0; i < 16; i++) {
             dec_pass[j][i] = x.b[i];
@@ -76,16 +78,11 @@ void send_chars_pass(uint8_t *out) {
 uint8_t crypto_process_record_user(uint16_t keycode, keyrecord_t *record, const uint8_t encrypted_passwords[2][16]) {
     if (crypto_mode) {
         switch (keycode) {
-            // case KC_1:
-            //     if (record->event.pressed) {
-            //         readed_key[count_char_key] = ASCII_LOW_1;
-            //         count_char_key++;
-            //     }
-            //     return 1;
-            //     break;
             case RED_CRY_M:
                 if (record->event.pressed) {
+                    #ifdef USE_RED_CRY_DEBUG
                     print_int(readed_key);
+                    #endif
                     crypto_mode    = 0;
                     count_char_key = 0;
                     decrypt_pass_kuzn(encrypted_passwords);

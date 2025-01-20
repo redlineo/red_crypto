@@ -4,7 +4,7 @@
 #include "quantum.h"
 
 #ifndef KC_TO_ASCII_H
-#define KC_TO_ASCII_H
+#    define KC_TO_ASCII_H
 
 uint8_t kc_to_ascii(uint16_t keycode, keyrecord_t *record, uint8_t readed_key[], uint8_t *count_char_key);
 

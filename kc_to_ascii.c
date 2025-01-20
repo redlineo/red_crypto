@@ -12,7 +12,9 @@ void write_keycode(uint8_t up_key, uint8_t low_key, keyrecord_t *record, uint8_t
         } else {
             readed_key[*count_char_key] = low_key;
         }
+#ifdef USE_RED_CRY_DEBUG
         dprintf("%d", readed_key[*count_char_key]);
+#endif
         *count_char_key = *count_char_key + 1;
     }
 };
@@ -205,8 +207,8 @@ uint8_t kc_to_ascii(uint16_t keycode, keyrecord_t *record, uint8_t readed_key[],
             write_keycode(ASCII_UP_QUOTE, ASCII_LOW_QUOTE, record, readed_key, count_char_key);
             return 1;
             break;
-        //i am not sure about KC_GRAVE and KC_NONUS_HASH
-        //need to test
+        // i am not sure about KC_GRAVE and KC_NONUS_HASH
+        // need to test
         case KC_GRAVE:
             write_keycode(ASCII_NON_PRINTABLE, ASCII_GRAVE, record, readed_key, count_char_key);
             return 1;
