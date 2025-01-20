@@ -4,7 +4,7 @@
 
 uint8_t dec_pass[2][16] = {{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}, {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}};
 
-uint8_t readed_key[32] = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
+uint8_t readed_key[128] = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
 
 uint8_t count_char_key = 0;
 
@@ -37,36 +37,41 @@ void decrypt_pass_kuzn(const uint8_t encrypted_passwords[2][16]) {
     kuz_key_t key;
     w128_t    x;
 
-    kuz_set_decrypt_key(&key, readed_key);
+    SHA256_CTX ctx;
+    sha256_init(&ctx);
+    sha256_update(&ctx,readed_key,MAX_KEY_LEN);
+    BYTE result_key[SHA256_BLOCK_SIZE];
+    sha256_final(&ctx,result_key);
+
+    kuz_set_decrypt_key(&key, result_key);
     for (uint8_t j = 0; j < 2; j++) {
         for (uint8_t i = 0; i < 16; i++) {
             x.b[i] = encrypted_passwords[j][i];
         }
         kuz_decrypt_block(&key, &x);
 
-        #ifdef USE_RED_CRY_DEBUG
+#ifdef USE_RED_CRY_DEBUG
         dprintf("decrypted\t=");
         print_w128(&x);
         print_chars_w128(&x);
-        #endif
+#endif
 
         for (uint8_t i = 0; i < 16; i++) {
             dec_pass[j][i] = x.b[i];
         }
     }
-
 };
 
 // TODO: add encrypt new passwords with binding on new keys
 // and storing all these to EEPROM
 // void encrypt_pass_kuzn(){
-    // kuz_set_encrypt_key(&key,readed_key);
-    // for (uint8_t i=0; i<16; i++) {
-    //     x.b[i] = pass[i];
-    // }
-    // kuz_encrypt_block(&key,&x);
-    // printf("encrypted\t="); print_w128(&x);
-    // print_chars_w128(&x);
+// kuz_set_encrypt_key(&key,readed_key);
+// for (uint8_t i=0; i<16; i++) {
+//     x.b[i] = pass[i];
+// }
+// kuz_encrypt_block(&key,&x);
+// printf("encrypted\t="); print_w128(&x);
+// print_chars_w128(&x);
 // }
 
 void send_chars_pass(uint8_t *out) {
@@ -80,14 +85,15 @@ uint8_t crypto_process_record_user(uint16_t keycode, keyrecord_t *record, const 
         switch (keycode) {
             case RED_CRY_M:
                 if (record->event.pressed) {
-                    #ifdef USE_RED_CRY_DEBUG
+#ifdef USE_RED_CRY_DEBUG
                     print_int(readed_key);
-                    #endif
+#endif
                     crypto_mode    = 0;
                     count_char_key = 0;
                     decrypt_pass_kuzn(encrypted_passwords);
                 }
             default:
+                //reading key
                 return kc_to_ascii(keycode, record, readed_key, &count_char_key);
                 break;
         }

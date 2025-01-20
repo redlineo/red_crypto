@@ -158,12 +158,13 @@ void sha256_final(SHA256_CTX *ctx, BYTE hash[])
 	}
 }
 
-/*********************** TEST FUNCTION DEFINITIONS ***********************/
-#ifdef TEST_FUNCTIONS_ENABLED
-inline size_t u_strlen(const unsigned char * array)
+size_t u_strlen(const unsigned char * array)
 {
     return strlen((const char*)array);
 }
+
+/*********************** TEST FUNCTION DEFINITIONS ***********************/
+#ifdef TEST_FUNCTIONS_ENABLED
 
 void exec_sha256_test(void)
 {

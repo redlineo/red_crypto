@@ -21,6 +21,8 @@
 #        include "aes.h"
 #    endif
 
+#define MAX_KEY_LEN 128
+
 enum red_crypto_keys {
     RED_CRY_M = SAFE_RANGE + 0x80, // added safe range offset
     RED_RNG,
