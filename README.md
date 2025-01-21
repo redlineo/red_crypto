@@ -66,11 +66,23 @@ Choose `GOST Encrypt`, then choose type `GOST R 34.12 (Kuznechik, 2015)`, not `M
  94208510C2C001FB01C0C21085209401
  ```
 
-6. Add your encrypted passwords in **keymap.c**. Now you can encrypt 2 passwords with length <=16 byte. Keep this information in secret. Even if there are no plaintext. 
+6. Add your encrypted passwords in **keymap.c**. Now you can encrypt 4 passwords with any length (16, 32, 64, more not tested). Keep this information in secret. Even if there are no plaintext. 
 
 ```c
-const uint8_t encrypted_passwords[2][16] = { {0,0,0,...,0,0,0}, {0,0,0,...,0,0,0} };
+const uint8_t encrypted_passwords[STORAGE_SIZE][STORAGE_PASS_LEN] = {
+    {0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,
+     0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,
+     0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,
+     0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00},
+    };
 ```
+
+If you want more passwords in storage, you should:
+- add keys `RED_PASSX` into `enum red_crypto_keys` in `red_crypto.h`
+- add into `crypto_proccess_record_user` handling new keys
+- add into `uint8_t dec_pass[STORAGE_SIZE][STORAGE_PASS_LEN]` additional data. There are must be same size as `encrypted_passwords`.
+
+> I know, that's inconvenient. I'm sorry, trying to do something with it.
 
 7. Add new layer or set new keyes everywhere you want.
 
