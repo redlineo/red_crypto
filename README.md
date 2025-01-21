@@ -5,15 +5,16 @@
 Password manager for (almost) any QMK keyboards. 
 Supports cryptographic algorithms:
 - [x] Kuznechik (Russian GOST cipher)
-- [ ] SHA256 (for hashing key)
+- [x] SHA256 (for hashing key)
+- [ ] Streebog (for hashing key, Russian GOST hash algorithm)
 - [ ] AES256
 
 ## Features and plans
 
 - [x] add read all ASCII-printable symbols for key
 - [x] add Kuznechik lib for non 128 bit MCU
-- [ ] use SHA256 for hashing key to set key length to 32 bytes
-- [ ] expand password length from 16 byte to 64
+- [x] use SHA256 for hashing key to set key length to 32 bytes
+- [ ] expand stored passwords length from 16 byte to 64
 - [ ] expand number of stored passwords, may be with auto-adding new keycodes
 - [ ] add CBC mode for Kuznechik, it will increase security
 
@@ -33,17 +34,25 @@ include keyboards/<your keyboard>/<path to your keymap folder>/red_crypto/red_cr
 #include "red_crypto/red_crypto.h"
 ```
 
-4. Enable chosen algorithms. Now you can use only `Kuznechik`. 
+4. Enable chosen algorithms with define in `config.h`. Now you can use only `Kuznechik`. 
 
 ```c
 #define USE_KUZNECHIK_8
+```
+
+If you want use SHA256 of your key to encrypt passwords, define this in `config.h`.
+
+```c
+#define USE_SHA256_KEY
 ```
 
 5. Encrypt your passwords with chosen algorithm (AES, Kuznechik). Now available only Kuznechik. You can use `CyberChef`. 
 
 > Don't use web version! We are here for security, right?
 
-Choose `GOST Encrypt`, then choose type `GOST R 34.12 (Kuznechik, 2015)`, not `Magma`. Choose mode `ECB`. Now, there is no other modes for `Kuznechik`.
+If you've enabled SHA256 for key, choose `SHA2`, then `SHA256` mode and `64` rounds. Hash your key, then copy it to next step.
+
+Choose `GOST Encrypt`, then choose type `GOST R 34.12 (Kuznechik, 2015)`, not `Magma`. Choose mode `ECB`. Now there is no other modes for `Kuznechik`.
 
 > Don't forget IV for GOST
  ```

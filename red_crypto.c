@@ -4,7 +4,13 @@
 
 uint8_t dec_pass[2][16] = {{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}, {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}};
 
+//you can use key any length with SHA256, kuznechik use only 32byte
+#ifdef USE_SHA256_KEY
 uint8_t readed_key[128] = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
+#endif
+#ifndef USE_SHA256_KEY
+uint8_t readed_key[32] = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
+#endif
 
 uint8_t count_char_key = 0;
 
@@ -33,17 +39,36 @@ void print_int(uint8_t *c) {
     dprintf("\n");
 };
 
+void print_hex(uint8_t *h) {
+    for (uint8_t i = 0; i < 32; i++) {
+        dprintf("%x ", h[i]);
+    }
+    dprintf("\n");
+};
+
+size_t min_len(size_t a, size_t b) {
+    if (a < b)
+        return a;
+    else
+        return b;
+}
+
 void decrypt_pass_kuzn(const uint8_t encrypted_passwords[2][16]) {
     kuz_key_t key;
     w128_t    x;
 
+#ifdef USE_SHA256_KEY
     SHA256_CTX ctx;
     sha256_init(&ctx);
-    sha256_update(&ctx,readed_key,MAX_KEY_LEN);
+    sha256_update(&ctx, readed_key, min_len(u_strlen(readed_key), MAX_KEY_LEN));
     BYTE result_key[SHA256_BLOCK_SIZE];
-    sha256_final(&ctx,result_key);
-
+    sha256_final(&ctx, result_key);
+    print_hex(result_key);
     kuz_set_decrypt_key(&key, result_key);
+#endif
+#ifndef USE_SHA256_KEY
+    kuz_set_decrypt_key(&key, readed_key);
+#endif
     for (uint8_t j = 0; j < 2; j++) {
         for (uint8_t i = 0; i < 16; i++) {
             x.b[i] = encrypted_passwords[j][i];
@@ -93,7 +118,7 @@ uint8_t crypto_process_record_user(uint16_t keycode, keyrecord_t *record, const 
                     decrypt_pass_kuzn(encrypted_passwords);
                 }
             default:
-                //reading key
+                // reading key
                 return kc_to_ascii(keycode, record, readed_key, &count_char_key);
                 break;
         }

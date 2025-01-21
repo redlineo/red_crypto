@@ -14,14 +14,16 @@
 
 #    ifdef USE_RED_KUZNECHIK_8
 #        include "kuznechik_8bit.h"
-#        include "sha256.h"
+#        ifdef USE_SHA256_KEY
+#            include "sha256.h"
+#        endif
 #    endif
 
 #    ifdef USE_RED_AES_256
 #        include "aes.h"
 #    endif
 
-#define MAX_KEY_LEN 128
+#    define MAX_KEY_LEN 128
 
 enum red_crypto_keys {
     RED_CRY_M = SAFE_RANGE + 0x80, // added safe range offset
