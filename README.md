@@ -1,4 +1,4 @@
-# RED_CRYPTO ver 0.4.0
+# RED_CRYPTO ver 0.5.0
 
 ## Description
 
@@ -34,7 +34,7 @@ include keyboards/<your keyboard>/<path to your keymap folder>/red_crypto/red_cr
 #include "red_crypto/red_crypto.h"
 ```
 
-4. Enable chosen algorithms with define in `config.h`. Now you can use only `Kuznechik`. 
+4. Define chosen algorithms and parameters in `config.h`. Now you can use only `Kuznechik`. 
 
 ```c
 #define USE_KUZNECHIK_8
@@ -44,6 +44,13 @@ If you want use SHA256 of your key to encrypt passwords, define this in `config.
 
 ```c
 #define USE_SHA256_KEY
+```
+
+Change storage size (default `4`) and maximum password length (default `64`). 
+
+```c
+#define STORAGE_SIZE 4
+#define STORAGE_PASS_LEN 64 // use a multiple of 16, e.g. 16, 32, 64... but don't forget about available memory! 
 ```
 
 5. Encrypt your passwords with chosen algorithm (AES, Kuznechik). Now available only Kuznechik. You can use `CyberChef`. 

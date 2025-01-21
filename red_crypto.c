@@ -2,15 +2,37 @@
 
 #include "red_crypto.h"
 
-uint8_t dec_pass[2][16] = {{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}, {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}};
+uint8_t dec_pass[STORAGE_SIZE][STORAGE_PASS_LEN] = {
+    {0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,
+     0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,
+     0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00, 
+     0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00},
 
-//you can use key any length with SHA256, kuznechik use only 32byte
+    {0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,
+     0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,
+     0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00, 
+     0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00},
+
+    {0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,
+     0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,
+     0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00, 
+     0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00},
+
+    {0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,
+     0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,
+     0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00, 
+     0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00},
+};
+
+// you can use key any length with SHA256, kuznechik use only 32byte
 #ifdef USE_SHA256_KEY
 uint8_t readed_key[128] = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
 #endif
 #ifndef USE_SHA256_KEY
 uint8_t readed_key[32] = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
 #endif
+
+const uint8_t test_pass_block[16] = {0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00};
 
 uint8_t count_char_key = 0;
 
@@ -53,7 +75,7 @@ size_t min_len(size_t a, size_t b) {
         return b;
 }
 
-void decrypt_pass_kuzn(const uint8_t encrypted_passwords[2][16]) {
+void decrypt_pass_kuzn(const uint8_t encrypted_passwords[STORAGE_SIZE][STORAGE_PASS_LEN]) {
     kuz_key_t key;
     w128_t    x;
 
@@ -69,20 +91,36 @@ void decrypt_pass_kuzn(const uint8_t encrypted_passwords[2][16]) {
 #ifndef USE_SHA256_KEY
     kuz_set_decrypt_key(&key, readed_key);
 #endif
-    for (uint8_t j = 0; j < 2; j++) {
-        for (uint8_t i = 0; i < 16; i++) {
-            x.b[i] = encrypted_passwords[j][i];
-        }
-        kuz_decrypt_block(&key, &x);
-
+    for (uint8_t j = 0; j < STORAGE_SIZE; j++) {
 #ifdef USE_RED_CRY_DEBUG
         dprintf("decrypted\t=");
-        print_w128(&x);
-        print_chars_w128(&x);
 #endif
+        for (uint8_t k = 0; k < STORAGE_PASS_LEN / 16; k++) {
+            uint8_t cnt_zeros=0;
+            for (uint8_t z = 0+k*16; z < 16+k*16; z++) {
+                if (encrypted_passwords[j][z] == 0x00) {
+                    cnt_zeros++;
+                } else {
+                    cnt_zeros = 0;
+                    break;
+                }
+            }
+            if (cnt_zeros!=0) break; // if there is zero 8 byte block in password, e.g. password length <32 or <64
 
-        for (uint8_t i = 0; i < 16; i++) {
-            dec_pass[j][i] = x.b[i];
+            for (uint8_t i = 0 + k * 16; i < 16 + k * 16; i++) {
+                x.b[i%16] = encrypted_passwords[j][i];
+            }
+
+            kuz_decrypt_block(&key, &x);
+
+            for (uint8_t i = 0 + k * 16; i < 16 + k * 16; i++) {
+                dec_pass[j][i] = x.b[i%16];
+            }
+
+#ifdef USE_RED_CRY_DEBUG
+            print_w128(&x);
+            print_chars_w128(&x);
+#endif
         }
     }
 };
@@ -100,12 +138,12 @@ void decrypt_pass_kuzn(const uint8_t encrypted_passwords[2][16]) {
 // }
 
 void send_chars_pass(uint8_t *out) {
-    for (uint8_t i = 0; i < 16 && out[i] != 0; i++) {
+    for (uint8_t i = 0; i < STORAGE_PASS_LEN && out[i] != 0; i++) {
         send_char((char)out[i]);
     }
 };
 
-uint8_t crypto_process_record_user(uint16_t keycode, keyrecord_t *record, const uint8_t encrypted_passwords[2][16]) {
+uint8_t crypto_process_record_user(uint16_t keycode, keyrecord_t *record, const uint8_t encrypted_passwords[STORAGE_SIZE][STORAGE_PASS_LEN]) {
     if (crypto_mode) {
         switch (keycode) {
             case RED_CRY_M:
@@ -132,6 +170,16 @@ uint8_t crypto_process_record_user(uint16_t keycode, keyrecord_t *record, const 
             case RED_PASS2:
                 if (record->event.pressed) {
                     send_chars_pass(dec_pass[1]);
+                }
+                break;
+            case RED_PASS3:
+                if (record->event.pressed) {
+                    send_chars_pass(dec_pass[2]);
+                }
+                break;
+            case RED_PASS4:
+                if (record->event.pressed) {
+                    send_chars_pass(dec_pass[3]);
                 }
                 break;
             case RED_RNG:
