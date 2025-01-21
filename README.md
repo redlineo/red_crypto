@@ -66,7 +66,13 @@ Choose `GOST Encrypt`, then choose type `GOST R 34.12 (Kuznechik, 2015)`, not `M
  94208510C2C001FB01C0C21085209401
  ```
 
-6. Add your encrypted passwords in **keymap.c**. Now you can encrypt 4 passwords with any length (16, 32, 64, more not tested). Keep this information in secret. Even if there are no plaintext. 
+6. Add your encrypted passwords in **keymap.c**. Now you can encrypt 4 passwords with any length (16, 32, 64, more not tested). 
+
+> Keep this information in secret. Even if there are no plaintext. 
+
+Chosen parameter `STORAGE_PASS_LEN` must be the same as the number of zeros in this array.
+
+Chosen parameter `STORAGE_SIZE` must be the same as the number of passwords in this array.
 
 ```c
 const uint8_t encrypted_passwords[STORAGE_SIZE][STORAGE_PASS_LEN] = {
