@@ -24,42 +24,6 @@ uint8_t count_char_key = 0;
 
 uint8_t crypto_mode = 0;
 
-void print_chars_w128(w128_t *x) {
-    for (uint8_t i = 0; i < 16; i++) {
-        if (x->b[i] == 0x00) break;
-        dprintf("%c", x->b[i]);
-    }
-    dprintf("\n");
-};
-
-void print_chars(uint8_t *c) {
-    for (uint8_t i = 0; i < 32; i++) {
-        if (c[i] == 0x00) break;
-        dprintf("%c", c[i]);
-    }
-    dprintf("\n");
-};
-
-void print_int(uint8_t *c) {
-    for (uint8_t i = 0; i < 32; i++) {
-        dprintf("%d", c[i]);
-    }
-    dprintf("\n");
-};
-
-void print_hex(uint8_t *h) {
-    for (uint8_t i = 0; i < 32; i++) {
-        dprintf("%x ", h[i]);
-    }
-    dprintf("\n");
-};
-
-size_t min_len(size_t a, size_t b) {
-    if (a < b)
-        return a;
-    else
-        return b;
-}
 
 void decrypt_pass_kuzn(const uint8_t encrypted_passwords[STORAGE_SIZE][STORAGE_PASS_LEN]) {
     kuz_key_t key;

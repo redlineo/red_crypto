@@ -264,6 +264,13 @@ void print_w128(w128_t *x)
 	printf("\n");
 };
 
+void print_chars_w128(w128_t *x) {
+    for (uint8_t i = 0; i < 16; i++) {
+        if (x->b[i] == 0x00) break;
+        printf("%c", x->b[i]);
+    }
+    printf("\n");
+};
 
 /*********************** TEST FUNCTION DEFINITIONS ***********************/
 #ifdef TEST_FUNCTIONS_ENABLED

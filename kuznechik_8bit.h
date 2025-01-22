@@ -32,6 +32,7 @@ void kuz_decrypt_block(kuz_key_t *subkeys, void *x);
 
 // utils
 void print_w128(w128_t *x);
+void print_chars_w128(w128_t *x);
 
 // tests
 #ifdef TEST_FUNCTIONS_ENABLED
