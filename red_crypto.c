@@ -4,7 +4,7 @@
 
 uint8_t dec_pass[STORAGE_SIZE][STORAGE_PASS_LEN];
 
-void init_dec_pass() {
+void init_dec_pass(void) {
     for (uint8_t i = 0; i < STORAGE_SIZE; i++) {
         for (uint8_t j = 0; j < STORAGE_PASS_LEN; j++) {
             dec_pass[i][j] = 0x00;
