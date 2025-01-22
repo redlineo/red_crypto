@@ -14,8 +14,9 @@ Supports cryptographic algorithms:
 - [x] add read all ASCII-printable symbols for key
 - [x] add Kuznechik lib for non 128 bit MCU
 - [x] use SHA256 for hashing key to set key length to 32 bytes
-- [ ] expand stored passwords length from 16 byte to 64
-- [ ] expand number of stored passwords, may be with auto-adding new keycodes
+- [x] expand stored passwords length from 16 byte to 64
+- [x] expand number of stored passwords (manual adding new keys)
+- [ ] write new passwords to EEPROM without flashing firmware
 - [ ] add CBC mode for Kuznechik, it will increase security
 
 ## Installation
@@ -86,9 +87,6 @@ const uint8_t encrypted_passwords[STORAGE_SIZE][STORAGE_PASS_LEN] = {
 If you want more passwords in storage, you should:
 - add keys `RED_PASSX` into `enum red_crypto_keys` in `red_crypto.h`
 - add into `crypto_proccess_record_user` handling new keys
-- add into `uint8_t dec_pass[STORAGE_SIZE][STORAGE_PASS_LEN]` additional data. There are must be same size as `encrypted_passwords`.
-
-> I know, that's inconvenient. I'm sorry, trying to do something with it.
 
 7. Add new layer or set new keyes everywhere you want.
 
