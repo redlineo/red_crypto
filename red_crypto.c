@@ -24,7 +24,6 @@ uint8_t count_char_key = 0;
 
 uint8_t crypto_mode = 0;
 
-
 void decrypt_pass_kuzn(const uint8_t encrypted_passwords[STORAGE_SIZE][STORAGE_PASS_LEN]) {
     kuz_key_t key;
     w128_t    x;
