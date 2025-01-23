@@ -24,6 +24,10 @@ uint8_t count_char_key = 0;
 
 uint8_t crypto_mode = 0;
 
+uint8_t decrypted_mode = 0;
+
+uint8_t red_menu_mode = 0;
+
 void decrypt_pass_kuzn(const uint8_t encrypted_passwords[STORAGE_SIZE][STORAGE_PASS_LEN]) {
     kuz_key_t key;
     w128_t    x;
@@ -88,12 +92,6 @@ void decrypt_pass_kuzn(const uint8_t encrypted_passwords[STORAGE_SIZE][STORAGE_P
 // print_chars_w128(&x);
 // }
 
-void send_chars_pass(uint8_t *out) {
-    for (uint8_t i = 0; i < STORAGE_PASS_LEN && out[i] != 0; i++) {
-        send_char((char)out[i]);
-    }
-};
-
 uint8_t crypto_process_record_user(uint16_t keycode, keyrecord_t *record, const uint8_t encrypted_passwords[STORAGE_SIZE][STORAGE_PASS_LEN]) {
     if (crypto_mode) {
         switch (keycode) {
@@ -105,11 +103,20 @@ uint8_t crypto_process_record_user(uint16_t keycode, keyrecord_t *record, const 
                     crypto_mode    = 0;
                     count_char_key = 0;
                     decrypt_pass_kuzn(encrypted_passwords);
+                    decrypted_mode = 1;
                 }
             default:
                 // reading key
                 return kc_to_ascii(keycode, record, readed_key, &count_char_key);
                 break;
+        }
+    } else if (decrypted_mode && red_menu_mode) {
+        uint8_t key_return = draw_red_menu(keycode, record);
+        if (key_return == 2){
+            red_menu_mode = 0;
+        }
+        else{
+            return key_return;
         }
     } else {
         switch (keycode) {
@@ -163,6 +170,13 @@ uint8_t crypto_process_record_user(uint16_t keycode, keyrecord_t *record, const 
                         readed_key[i] = 0;
                     }
                     // dprintf("%d", keycode);
+                }
+                break;
+            case RED_MENU:
+                if (record->event.pressed) {
+                    if (decrypted_mode == 1) {
+                        red_menu_mode = 1;
+                    }
                 }
                 break;
         }
