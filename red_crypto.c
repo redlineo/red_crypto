@@ -2,12 +2,33 @@
 
 #include "red_crypto.h"
 
+void crypto_eeprom_init() {
+    uint8_t storage_size     = INIT_STORAGE_SIZE;
+    uint8_t storage_pass_len = INIT_STORAGE_PASS_LEN;
+    typedef union {
+        uint8_t raw[3 + 3 + 1 + 1 + 4 + 1 + (uint32_t)storage_size * (uint32_t)storage_pass_len];
+        struct {
+            uint8_t  init_var[3]; // if in eeprom is bytes "RED", then it's not first flash or first power-on, or in eeprom is old red_crypto
+            uint8_t  version[3];  // red_crypto library version
+            uint8_t  storage_size;
+            uint8_t  storage_pass_len;
+            uint32_t memory_usage;
+            uint8_t  password_count;
+            uint8_t  passwords[(uint32_t)storage_size * (uint32_t)storage_pass_len];
+        };
+    } red_crypto_storage;
+
+    red_crypto_storage enc_pass;
+    //TODO: don't work with this var,copy it to global var in RAM
+    eeconfig_read_user_datablock(enc_pass.raw);
+}
+
 uint8_t *decrypted_passwords;
 
 // initialize array "decrypted_passwords" with 0x00
 void init_dec_pass(void) {
     // array = malloc(sizeof(int[ROWS][COLS])); // explicit 2D array notation
-    decrypted_passwords = malloc(sizeof(uint8_t [enc_pass.storage_size][enc_pass.storage_pass_len]));
+    decrypted_passwords = malloc(sizeof(uint8_t[enc_pass.storage_size][enc_pass.storage_pass_len]));
     for (uint8_t i = 0; i < enc_pass.storage_size; i++) {
         for (uint8_t j = 0; j < enc_pass.storage_pass_len; j++) {
             decrypted_passwords[i][j] = 0x00;
@@ -51,7 +72,6 @@ void encrypt_pass_kuzn() {
 #ifndef USE_SHA256_KEY
     kuz_set_encrypt_key(&key, readed_key);
 #endif
-
 }
 
 // decrypting passwords
@@ -75,7 +95,7 @@ void decrypt_pass_kuzn() {
 #ifndef USE_SHA256_KEY
     kuz_set_decrypt_key(&key, readed_key);
 #endif
-// decrypting all passwords in storage
+    // decrypting all passwords in storage
     for (uint8_t password_index = 0; password_index < enc_pass.storage_size; password_index++) {
 #ifdef USE_RED_CRY_DEBUG
         dprintf("decrypted\t=");
@@ -176,12 +196,12 @@ uint8_t crypto_process_record_user(uint16_t keycode, keyrecord_t *record) {
                     send_chars_pass(decrypted_passwords[3]);
                 }
                 break;
-            // if you want to add more keys for passwords, copy this `case`
-            // case RED_PASSX: //change X here
-            //     if (record->event.pressed) {
-            //         send_chars_pass(decrypted_passwords[X]); //change X here
-            //     }
-            //     break;
+                // if you want to add more keys for passwords, copy this `case`
+                // case RED_PASSX: //change X here
+                //     if (record->event.pressed) {
+                //         send_chars_pass(decrypted_passwords[X]); //change X here
+                //     }
+                //     break;
         }
     } else { // by default
         switch (keycode) {

@@ -7,7 +7,7 @@ uint8_t shift_tracker = 0;
 void write_keycode(uint8_t up_key, uint8_t low_key, keyrecord_t *record, uint8_t readed_key[], uint8_t *count_char_key) {
     if (record->event.pressed) {
         if (shift_tracker == 1) {
-            shift_tracker               = 0;
+            // shift_tracker               = 0;
             readed_key[*count_char_key] = up_key;
         } else {
             readed_key[*count_char_key] = low_key;
@@ -24,6 +24,9 @@ uint8_t kc_to_ascii(uint16_t keycode, keyrecord_t *record, uint8_t readed_key[],
         case KC_LEFT_SHIFT:
             if (record->event.pressed) {
                 shift_tracker = 1;
+            }
+            else {
+                shift_tracker = 0;
             }
             return 1;
             break;
