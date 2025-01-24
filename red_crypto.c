@@ -31,6 +31,29 @@ uint8_t decrypted_mode = 0;
 
 uint8_t red_menu_mode = 0;
 
+void encrypt_pass_kuzn() {
+    kuz_key_t key;
+    w128_t    x;
+
+    init_dec_pass();
+
+// for hashing key, like a KDF algorithm
+#ifdef USE_SHA256_KEY
+    SHA256_CTX ctx;
+    sha256_init(&ctx);
+    sha256_update(&ctx, readed_key, min_len(u_strlen(readed_key), MAX_KEY_LEN));
+    BYTE result_key[SHA256_BLOCK_SIZE];
+    sha256_final(&ctx, result_key);
+    print_hex(result_key);
+    kuz_set_encrypt_key(&key, result_key);
+#endif
+// if you don't have enough FLASH in MCU
+#ifndef USE_SHA256_KEY
+    kuz_set_encrypt_key(&key, readed_key);
+#endif
+
+}
+
 // decrypting passwords
 void decrypt_pass_kuzn() {
     kuz_key_t key;

@@ -133,13 +133,13 @@ To represent the resources that will be spent on the password storage. It is jus
 
 If you have 10 different password, set 64 byte size for encrypted password, 16 byte size for ecrypted name for each password, you will store:
 
-$ 10*(64+16) = 800b $
+$10*(64+16)=800b$
 
 i.e. even if you have arduino with 1kb EEPROM, you can store enough passwords.
 
 If you have up to 100.000 rewrite cycles, and if you will change you passwords every month, you will use up the entire resource of memory in:
 
-$ \frac{100.000}{10*(64+16)}=\frac{125}{12}=10.4167 $
+$\frac{100.000}{10*(64+16)}=\frac{125}{12}=10.4167$
 
 i.e. you can rewrite you passwords for 10 years. But in my calculations not consider the probability of forgetting passwords. 
 
