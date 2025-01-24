@@ -2,12 +2,15 @@
 
 #include "red_crypto.h"
 
-uint8_t dec_pass[STORAGE_SIZE][STORAGE_PASS_LEN];
+uint8_t *decrypted_passwords;
 
+// initialize array "decrypted_passwords" with 0x00
 void init_dec_pass(void) {
-    for (uint8_t i = 0; i < STORAGE_SIZE; i++) {
-        for (uint8_t j = 0; j < STORAGE_PASS_LEN; j++) {
-            dec_pass[i][j] = 0x00;
+    // array = malloc(sizeof(int[ROWS][COLS])); // explicit 2D array notation
+    decrypted_passwords = malloc(sizeof(uint8_t [enc_pass.storage_size][enc_pass.storage_pass_len]));
+    for (uint8_t i = 0; i < enc_pass.storage_size; i++) {
+        for (uint8_t j = 0; j < enc_pass.storage_pass_len; j++) {
+            decrypted_passwords[i][j] = 0x00;
         }
     }
 }
@@ -28,12 +31,14 @@ uint8_t decrypted_mode = 0;
 
 uint8_t red_menu_mode = 0;
 
-void decrypt_pass_kuzn(const uint8_t encrypted_passwords[STORAGE_SIZE][STORAGE_PASS_LEN]) {
+// decrypting passwords
+void decrypt_pass_kuzn() {
     kuz_key_t key;
     w128_t    x;
 
     init_dec_pass();
 
+// for hashing key, like a KDF algorithm
 #ifdef USE_SHA256_KEY
     SHA256_CTX ctx;
     sha256_init(&ctx);
@@ -43,17 +48,21 @@ void decrypt_pass_kuzn(const uint8_t encrypted_passwords[STORAGE_SIZE][STORAGE_P
     print_hex(result_key);
     kuz_set_decrypt_key(&key, result_key);
 #endif
+// if you don't have enough FLASH in MCU
 #ifndef USE_SHA256_KEY
     kuz_set_decrypt_key(&key, readed_key);
 #endif
-    for (uint8_t j = 0; j < STORAGE_SIZE; j++) {
+// decrypting all passwords in storage
+    for (uint8_t password_index = 0; password_index < enc_pass.storage_size; password_index++) {
 #ifdef USE_RED_CRY_DEBUG
         dprintf("decrypted\t=");
 #endif
-        for (uint8_t k = 0; k < STORAGE_PASS_LEN / 16; k++) {
+        for (uint8_t block_index = 0; block_index < enc_pass.storage_pass_len / 16; block_index++) {
             uint8_t cnt_zeros = 0;
-            for (uint8_t z = 0 + k * 16; z < 16 + k * 16; z++) {
-                if (encrypted_passwords[j][z] == 0x00) {
+            // checking is this empty block or not
+            for (uint8_t byte_index = 0 + block_index * 16; byte_index < 16 + block_index * 16; byte_index++) {
+                // if (encrypted_passwords[password_index][byte_index] == 0x00) {
+                if (enc_pass.passwords[password_index * enc_pass.storage_pass_len + byte_index] == 0x00) {
                     cnt_zeros++;
                 } else {
                     cnt_zeros = 0;
@@ -62,14 +71,18 @@ void decrypt_pass_kuzn(const uint8_t encrypted_passwords[STORAGE_SIZE][STORAGE_P
             }
             if (cnt_zeros != 0) break; // if there is zero 8 byte block in password, e.g. password length <32 or <64
 
-            for (uint8_t i = 0 + k * 16; i < 16 + k * 16; i++) {
-                x.b[i % 16] = encrypted_passwords[j][i];
+            // reading password's block for decrypting
+            for (uint8_t byte_index = 0 + block_index * 16; byte_index < 16 + block_index * 16; byte_index++) {
+                // x.b[byte_index % 16] = encrypted_passwords[password_index][byte_index];
+                x.b[byte_index % 16] = enc_pass.passwords[password_index * enc_pass.storage_pass_len + byte_index]
             }
 
+            // decrypting via Kuznechik
             kuz_decrypt_block(&key, &x);
 
-            for (uint8_t i = 0 + k * 16; i < 16 + k * 16; i++) {
-                dec_pass[j][i] = x.b[i % 16];
+            // writing decrypted password's block
+            for (uint8_t byte_index = 0 + block_index * 16; byte_index < 16 + block_index * 16; byte_index++) {
+                decrypted_passwords[password_index][byte_index] = x.b[byte_index % 16];
             }
 
 #ifdef USE_RED_CRY_DEBUG
@@ -92,7 +105,8 @@ void decrypt_pass_kuzn(const uint8_t encrypted_passwords[STORAGE_SIZE][STORAGE_P
 // print_chars_w128(&x);
 // }
 
-uint8_t crypto_process_record_user(uint16_t keycode, keyrecord_t *record, const uint8_t encrypted_passwords[STORAGE_SIZE][STORAGE_PASS_LEN]) {
+// function for embedding to "proccess_record_user" for adding crypto features
+uint8_t crypto_process_record_user(uint16_t keycode, keyrecord_t *record) {
     if (crypto_mode) {
         switch (keycode) {
             case RED_CRY_M:
@@ -102,7 +116,7 @@ uint8_t crypto_process_record_user(uint16_t keycode, keyrecord_t *record, const 
 #endif
                     crypto_mode    = 0;
                     count_char_key = 0;
-                    decrypt_pass_kuzn(encrypted_passwords);
+                    decrypt_pass_kuzn();
                     decrypted_mode = 1;
                 }
             default:
@@ -112,40 +126,42 @@ uint8_t crypto_process_record_user(uint16_t keycode, keyrecord_t *record, const 
         }
     } else if (decrypted_mode && red_menu_mode) {
         uint8_t key_return = draw_red_menu(keycode, record);
-        if (key_return == 2){
+        if (key_return == 2) {
             red_menu_mode = 0;
-        }
-        else{
+        } else {
             return key_return;
         }
-    } else {
+    } else if (decrypted_mode) {
         switch (keycode) {
             case RED_PASS1:
                 if (record->event.pressed) {
-                    send_chars_pass(dec_pass[0]);
+                    send_chars_pass(decrypted_passwords[0]);
                 }
                 break;
             case RED_PASS2:
                 if (record->event.pressed) {
-                    send_chars_pass(dec_pass[1]);
+                    send_chars_pass(decrypted_passwords[1]);
                 }
                 break;
             case RED_PASS3:
                 if (record->event.pressed) {
-                    send_chars_pass(dec_pass[2]);
+                    send_chars_pass(decrypted_passwords[2]);
                 }
                 break;
             case RED_PASS4:
                 if (record->event.pressed) {
-                    send_chars_pass(dec_pass[3]);
+                    send_chars_pass(decrypted_passwords[3]);
                 }
                 break;
             // if you want to add more keys for passwords, copy this `case`
             // case RED_PASSX: //change X here
             //     if (record->event.pressed) {
-            //         send_chars_pass(dec_pass[X]); //change X here
+            //         send_chars_pass(decrypted_passwords[X]); //change X here
             //     }
             //     break;
+        }
+    } else { // by default
+        switch (keycode) {
             case RED_RNG:
                 if (record->event.pressed) {
                     // TODO: change seed
@@ -165,7 +181,8 @@ uint8_t crypto_process_record_user(uint16_t keycode, keyrecord_t *record, const 
                 break;
             case RED_CRY_M:
                 if (record->event.pressed) {
-                    crypto_mode = 1;
+                    crypto_mode = 1; // to enter in crypto mode block code above
+                    // clearing readed key
                     for (uint8_t i = 0; i < 32; i++) {
                         readed_key[i] = 0;
                     }
@@ -175,11 +192,11 @@ uint8_t crypto_process_record_user(uint16_t keycode, keyrecord_t *record, const 
             case RED_MENU:
                 if (record->event.pressed) {
                     if (decrypted_mode == 1) {
-                        red_menu_mode = 1;
+                        red_menu_mode = 1; // to enter in menu mode block code above
                     }
                 }
                 break;
         }
     }
-    return 0;
+    return 1; // for capturing entering of all keys from red_crypto
 }

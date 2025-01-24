@@ -27,20 +27,7 @@
 #    endif
 
 #    define MAX_KEY_LEN 128
-
-#    ifndef STORAGE_SIZE
-#        define STORAGE_SIZE 4
-#    endif
-
-#    ifdef STORAGE_PASS_LEN
-#        if STORAGE_PASS_LEN % 16 != 0
-#            error Storage password length must be a multiple of 16
-#        endif
-#    endif
-
-#    ifndef STORAGE_PASS_LEN
-#        define STORAGE_PASS_LEN 64
-#    endif
+#    define BLOCK_SIZE 16
 
 
 // example for encrypted 64 byte password
@@ -56,6 +43,7 @@ enum red_crypto_keys {
     RED_MENU,
     RED_RNG,
     RED_TEST,
+    RED_LOCK, // TODO: add autolock feature
     RED_PASS1,
     RED_PASS2,
     RED_PASS3,
@@ -68,6 +56,21 @@ enum red_crypto_keys {
     RED_PASS10
 };
 
-uint8_t crypto_process_record_user(uint16_t keycode, keyrecord_t *record, const uint8_t encrypted_passwords[STORAGE_SIZE][STORAGE_PASS_LEN]);
+uint8_t storage_size = 4;
+uint8_t storage_pass_len = 64;
+
+typedef union {
+    uint8_t raw[1+1+4+(uint32_t)storage_size*(uint32_t)storage_pass_len];
+    struct {
+        uint8_t storage_size;
+        uint8_t storage_pass_len;
+        uint32_t memory_usage;
+        uint8_t passwords[(uint32_t)storage_size*(uint32_t)storage_pass_len];
+    };
+} red_crypto_storage;
+
+red_crypto_storage enc_pass;
+
+uint8_t crypto_process_record_user(uint16_t keycode, keyrecord_t *record);
 
 #endif
