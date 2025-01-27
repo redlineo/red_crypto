@@ -3,32 +3,43 @@
 #include "red_crypto.h"
 
 void crypto_eeprom_init() {
-    uint8_t storage_size     = INIT_STORAGE_SIZE;
-    uint8_t storage_pass_len = INIT_STORAGE_PASS_LEN;
-    typedef union {
-        uint8_t raw[3 + 3 + 1 + 1 + 4 + 1 + (uint32_t)storage_size * (uint32_t)storage_pass_len];
-        struct {
-            uint8_t  init_var[3]; // if in eeprom is bytes "RED", then it's not first flash or first power-on, or in eeprom is old red_crypto
-            uint8_t  version[3];  // red_crypto library version
-            uint8_t  storage_size;
-            uint8_t  storage_pass_len;
-            uint32_t memory_usage;
-            uint8_t  password_count;
-            uint8_t  passwords[(uint32_t)storage_size * (uint32_t)storage_pass_len];
-        };
-    } red_crypto_storage;
-
-    red_crypto_storage enc_pass;
-    //TODO: don't work with this var,copy it to global var in RAM
+    uint8_t red_var[3] = {'R', 'E', 'D'};
+    // TODO: don't work with this var,copy it to global var in RAM
     eeconfig_read_user_datablock(enc_pass.raw);
+    if (memcmp(enc_pass.init_var, red_var, 3)) { // not empty eeprom
+#undef INIT_STORAGE_SIZE
+#define INIT_STORAGE_SIZE enc_pass.storage_size
+#undef INIT_STORAGE_PASS_LEN
+#define INIT_STORAGE_PASS_LEN enc_pass.storage_pass_len
+    } else { // empty eeprom
+        enc_pass.init_var[0]      = 'R';
+        enc_pass.init_var[1]      = 'E';
+        enc_pass.init_var[2]      = 'D';
+        enc_pass.version[0]       = '0';
+        enc_pass.version[1]       = '6';
+        enc_pass.version[2]       = '5';
+        enc_pass.memory_usage     = 0;
+        enc_pass.password_count   = 0;
+        enc_pass.storage_size     = INIT_STORAGE_SIZE;
+        enc_pass.storage_pass_len = INIT_STORAGE_PASS_LEN;
+        for (uint8_t password_index = 0; password_index < enc_pass.storage_size; password_index++) { // must zero bytes in memory
+            for (uint8_t password_byte = 0; password_byte < enc_pass.storage_pass_len; password_byte++) {
+                enc_pass.passwords[password_index * enc_pass.storage_pass_len + password_byte] = 0x00;
+            }
+        }
+        eeconfig_update_user_datablock(enc_pass.raw);
+    }
 }
 
-uint8_t *decrypted_passwords;
+uint8_t **decrypted_passwords;
 
 // initialize array "decrypted_passwords" with 0x00
 void init_dec_pass(void) {
-    // array = malloc(sizeof(int[ROWS][COLS])); // explicit 2D array notation
-    decrypted_passwords = malloc(sizeof(uint8_t[enc_pass.storage_size][enc_pass.storage_pass_len]));
+    decrypted_passwords = (uint8_t **)malloc(sizeof(uint8_t *) * enc_pass.storage_size);
+    for (uint8_t i = 0; i < enc_pass.storage_size; i++) {
+        decrypted_passwords[i] = (uint8_t *)malloc(sizeof(uint8_t) * enc_pass.storage_pass_len);
+    }
+
     for (uint8_t i = 0; i < enc_pass.storage_size; i++) {
         for (uint8_t j = 0; j < enc_pass.storage_pass_len; j++) {
             decrypted_passwords[i][j] = 0x00;
@@ -52,9 +63,9 @@ uint8_t decrypted_mode = 0;
 
 uint8_t red_menu_mode = 0;
 
-void encrypt_pass_kuzn() {
+void encrypt_pass_kuzn(void) {
     kuz_key_t key;
-    w128_t    x;
+    // w128_t    x;
 
     init_dec_pass();
 
@@ -62,10 +73,10 @@ void encrypt_pass_kuzn() {
 #ifdef USE_SHA256_KEY
     SHA256_CTX ctx;
     sha256_init(&ctx);
-    sha256_update(&ctx, readed_key, min_len(u_strlen(readed_key), MAX_KEY_LEN));
+    sha256_update(&ctx, readed_key, red_min_len(u_strlen(readed_key), MAX_KEY_LEN));
     BYTE result_key[SHA256_BLOCK_SIZE];
     sha256_final(&ctx, result_key);
-    print_hex(result_key);
+    red_print_hex(result_key);
     kuz_set_encrypt_key(&key, result_key);
 #endif
 // if you don't have enough FLASH in MCU
@@ -75,7 +86,7 @@ void encrypt_pass_kuzn() {
 }
 
 // decrypting passwords
-void decrypt_pass_kuzn() {
+void decrypt_pass_kuzn(void) {
     kuz_key_t key;
     w128_t    x;
 
@@ -85,10 +96,10 @@ void decrypt_pass_kuzn() {
 #ifdef USE_SHA256_KEY
     SHA256_CTX ctx;
     sha256_init(&ctx);
-    sha256_update(&ctx, readed_key, min_len(u_strlen(readed_key), MAX_KEY_LEN));
+    sha256_update(&ctx, readed_key, red_min_len(u_strlen(readed_key), MAX_KEY_LEN));
     BYTE result_key[SHA256_BLOCK_SIZE];
     sha256_final(&ctx, result_key);
-    print_hex(result_key);
+    red_print_hex(result_key);
     kuz_set_decrypt_key(&key, result_key);
 #endif
 // if you don't have enough FLASH in MCU
@@ -117,7 +128,7 @@ void decrypt_pass_kuzn() {
             // reading password's block for decrypting
             for (uint8_t byte_index = 0 + block_index * 16; byte_index < 16 + block_index * 16; byte_index++) {
                 // x.b[byte_index % 16] = encrypted_passwords[password_index][byte_index];
-                x.b[byte_index % 16] = enc_pass.passwords[password_index * enc_pass.storage_pass_len + byte_index]
+                x.b[byte_index % 16] = enc_pass.passwords[password_index * enc_pass.storage_pass_len + byte_index];
             }
 
             // decrypting via Kuznechik
@@ -155,7 +166,7 @@ uint8_t crypto_process_record_user(uint16_t keycode, keyrecord_t *record) {
             case RED_CRY_M:
                 if (record->event.pressed) {
 #ifdef USE_RED_CRY_DEBUG
-                    print_int(readed_key);
+                    red_print_int(readed_key);
 #endif
                     crypto_mode    = 0;
                     count_char_key = 0;
@@ -178,28 +189,28 @@ uint8_t crypto_process_record_user(uint16_t keycode, keyrecord_t *record) {
         switch (keycode) {
             case RED_PASS1:
                 if (record->event.pressed) {
-                    send_chars_pass(decrypted_passwords[0]);
+                    red_send_chars_pass(decrypted_passwords[0]);
                 }
                 break;
             case RED_PASS2:
                 if (record->event.pressed) {
-                    send_chars_pass(decrypted_passwords[1]);
+                    red_send_chars_pass(decrypted_passwords[1]);
                 }
                 break;
             case RED_PASS3:
                 if (record->event.pressed) {
-                    send_chars_pass(decrypted_passwords[2]);
+                    red_send_chars_pass(decrypted_passwords[2]);
                 }
                 break;
             case RED_PASS4:
                 if (record->event.pressed) {
-                    send_chars_pass(decrypted_passwords[3]);
+                    red_send_chars_pass(decrypted_passwords[3]);
                 }
                 break;
                 // if you want to add more keys for passwords, copy this `case`
                 // case RED_PASSX: //change X here
                 //     if (record->event.pressed) {
-                //         send_chars_pass(decrypted_passwords[X]); //change X here
+                //         red_send_chars_pass(decrypted_passwords[X]); //change X here
                 //     }
                 //     break;
         }

@@ -1,4 +1,4 @@
-# RED_CRYPTO ver 0.6.0
+# RED_CRYPTO ver 0.6.5
 
 See chapter about [Memory issue](#memory-issue) and [Memory usage](#memory-usage).
 I recommend using at the beginning internal FLASH or EEPROM, because you have some resources to realize the need for external memory. Or you can do not change your passwords, if there are very strong one's.
