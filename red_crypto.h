@@ -74,8 +74,9 @@ enum red_crypto_keys {
 #    define EEPROM_PASS_OFFSET 3 + 3 + 1 + 1 + 4 + 1
 
 typedef union {
-    uint8_t raw[EEPROM_PASS_OFFSET + INIT_STORAGE_SIZE * INIT_STORAGE_PASS_LEN];
+    uint8_t raw[EECONFIG_BASE_SIZE + EEPROM_PASS_OFFSET + INIT_STORAGE_SIZE * INIT_STORAGE_PASS_LEN];
     struct {
+        uint8_t  qmk_core[34];
         uint8_t  init_var[3]; // if in eeprom is bytes "RED", then it's not first flash or first power-on, or in eeprom is old red_crypto
         uint8_t  version[3];  // red_crypto library version
         uint8_t  storage_size;
@@ -89,7 +90,7 @@ typedef union {
 red_crypto_storage_eeprom enc_pass;
 
 uint8_t crypto_process_record_user(uint16_t keycode, keyrecord_t *record);
-void    encrypt_pass_kuzn(void);
+uint8_t *encrypt_pass_kuzn(const uint8_t *new_pass, const uint8_t new_pass_length);
 void    crypto_eeprom_init(void);
 
 #endif
