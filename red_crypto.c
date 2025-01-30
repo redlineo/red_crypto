@@ -2,22 +2,29 @@
 
 #include "red_crypto.h"
 
+uint8_t eeprom_inited = 0;
+
 void crypto_eeprom_init() {
     uint8_t red_var[3] = {'R', 'E', 'D'};
     // TODO: don't work with this var,copy it to global var in RAM
-    eeconfig_read_user_datablock(enc_pass.raw);
+    // TODO: write code for not emulated EEPROM
+    // eeconfig_read_user_datablock(enc_pass.raw);
     // for (uint8_t i = 0; i < EECONFIG_USER_DATA_SIZE; i++) {
     //     dprintf("%x ", enc_pass.raw[i]);
     // }
 
-    if (memcmp(enc_pass.init_var, red_var, 3)) { // not empty eeprom
+    red_read_from_storage();
+
+    if (enc_pass.init_var[0] == red_var[0] && enc_pass.init_var[1] == red_var[1] && enc_pass.init_var[2] == red_var[2] && enc_pass.password_count > 0) { // not empty eeprom
         dprintf("Not empty EEPROM\n");
-#undef INIT_STORAGE_SIZE
-#define INIT_STORAGE_SIZE enc_pass.storage_size
-#undef INIT_STORAGE_PASS_LEN
-#define INIT_STORAGE_PASS_LEN enc_pass.storage_pass_len
+        eeprom_inited = 1;
+        // #undef INIT_STORAGE_SIZE
+        // #define INIT_STORAGE_SIZE enc_pass.storage_size
+        // #undef INIT_STORAGE_PASS_LEN
+        // #define INIT_STORAGE_PASS_LEN enc_pass.storage_pass_len
     } else { // empty eeprom
         dprintf("Empty EEPROM\n");
+        eeprom_inited             = 0;
         enc_pass.init_var[0]      = 'R';
         enc_pass.init_var[1]      = 'E';
         enc_pass.init_var[2]      = 'D';
@@ -33,7 +40,8 @@ void crypto_eeprom_init() {
                 enc_pass.passwords[password_index * enc_pass.storage_pass_len + password_byte] = 0x00;
             }
         }
-        eeconfig_update_user_datablock(enc_pass.raw);
+        // eeconfig_update_user_datablock(enc_pass.raw);
+        red_write_to_storage();
     }
 }
 
@@ -92,12 +100,6 @@ uint8_t *encrypt_pass_kuzn(const uint8_t *new_pass, const uint8_t new_pass_lengt
 // if you don't have enough FLASH in MCU
 #ifndef USE_SHA256_KEY
     kuz_set_decrypt_key(&key, master_key);
-#endif
-
-#ifdef USE_RED_CRY_DEBUG
-    for (i = 0; i < 10; i++) {
-        print_w128(&key.k[i]);
-    }
 #endif
 
 #ifdef USE_RED_CRY_DEBUG
@@ -194,9 +196,10 @@ uint8_t crypto_process_record_user(uint16_t keycode, keyrecord_t *record) {
 #endif
                     crypto_mode    = 0;
                     count_char_key = 0;
-                    decrypt_pass_kuzn();
+                    if (eeprom_inited == 1) decrypt_pass_kuzn();
                     decrypted_mode = 1;
                 }
+                break;
             default:
                 // reading key
                 return kc_to_ascii(keycode, record, master_key, &count_char_key);
@@ -211,6 +214,28 @@ uint8_t crypto_process_record_user(uint16_t keycode, keyrecord_t *record) {
         }
     } else if (decrypted_mode) {
         switch (keycode) {
+            case RED_TEST:
+#ifdef TEST_FUNCTIONS_ENABLED
+                if (record->event.pressed) {
+                    exec_sha256_test();
+                    exec_kuznechik_test();
+                    exec_aes_test();
+                }
+#endif
+                break;
+            case RED_RNG:
+                if (record->event.pressed) {
+                    // TODO: change seed
+                    for (uint8_t i = 0; i < 32; i++) {
+                        tap_random_base64();
+                    }
+                }
+                break;
+            case RED_MENU:
+                if (record->event.pressed) {
+                    red_menu_mode = 1; // to enter in menu mode block code above
+                }
+                break;
             case RED_PASS1:
                 if (record->event.pressed && enc_pass.password_count <= 1) {
                     red_send_chars_pass(decrypted_passwords[0]);
@@ -268,27 +293,12 @@ uint8_t crypto_process_record_user(uint16_t keycode, keyrecord_t *record) {
                 //     }
                 //     break;
         }
-    } else { // by default
+    } else {
+        // by default
         switch (keycode) {
-            case RED_RNG:
-                if (record->event.pressed) {
-                    // TODO: change seed
-                    for (uint8_t i = 0; i < 32; i++) {
-                        tap_random_base64();
-                    }
-                }
-                break;
-            case RED_TEST:
-#ifdef TEST_FUNCTIONS_ENABLED
-                if (record->event.pressed) {
-                    exec_sha256_test();
-                    exec_kuznechik_test();
-                    exec_aes_test();
-                }
-#endif
-                break;
             case RED_CRY_M:
                 if (record->event.pressed) {
+                    crypto_eeprom_init();
                     crypto_mode = 1; // to enter in crypto mode block code above
                     // clearing readed key
                     for (uint8_t i = 0; i < 32; i++) {
@@ -297,14 +307,7 @@ uint8_t crypto_process_record_user(uint16_t keycode, keyrecord_t *record) {
                     // dprintf("%d", keycode);
                 }
                 break;
-            case RED_MENU:
-                if (record->event.pressed) {
-                    if (decrypted_mode == 1) {
-                        red_menu_mode = 1; // to enter in menu mode block code above
-                    }
-                }
-                break;
         }
     }
-    return 1; // for capturing entering of all keys from red_crypto
+    return 0;
 }
