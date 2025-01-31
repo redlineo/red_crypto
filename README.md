@@ -1,13 +1,17 @@
-# RED_CRYPTO ver 0.6.5
+# RED_CRYPTO ver 0.6.8
+
+## Description
+
+Password manager for (almost) any QMK-compatible keyboards. 
+
+## Alert
+
+> Now red_crypto supports STM32 EEPROM.
 
 See chapter about [Memory issue](#memory-issue) and [Memory usage](#memory-usage).
 I recommend using at the beginning internal FLASH or EEPROM, because you have some resources to realize the need for external memory. Or you can do not change your passwords, if there are very strong one's.
 
 > Red_crypto will remind you constanly about using internal memory.
-
-## Description
-
-Password manager for (almost) any QMK-compatible keyboards. 
 
 ### Supports cryptographic algorithms
 
@@ -24,7 +28,7 @@ Password manager for (almost) any QMK-compatible keyboards.
 - [x] expand stored passwords length from 16 byte to 64
 - [x] expand number of stored passwords (manual adding new keys)
 - [ ] add menu to see stored passwords, rewrite one's, name one's, update master password (via any text editor, raw_hid is disabled) 
-- [ ] write new passwords to EEPROM without flashing firmware
+- [x] write new passwords to EEPROM without flashing firmware
 - [ ] add support Streebog
 - [ ] add CBC mode for Kuznechik, it will increase security
 - [ ] add addition procedures for Kuznechik (is it really need?)
@@ -59,11 +63,11 @@ If you want use SHA256 of your key to encrypt passwords, define this in `config.
 #define USE_SHA256_KEY
 ```
 
-Change storage size (default `4`) and maximum password length (default `64`). 
+Change storage size (default `5`) and maximum password length (default `64`). 
 
 ```c
-#define STORAGE_SIZE 4
-#define STORAGE_PASS_LEN 64 // use a multiple of 16, e.g. 16, 32, 64... but don't forget about available memory! 
+#define INIT_STORAGE_SIZE 5
+#define INIT_STORAGE_PASS_LEN 64 // use a multiple of 16, e.g. 16, 32, 64... but don't forget about available memory! 
 ```
 
 5. Encrypt your passwords with chosen algorithm (AES, Kuznechik). Now available only Kuznechik. You can use `CyberChef`. 
@@ -79,35 +83,29 @@ Choose `GOST Encrypt`, then choose type `GOST R 34.12 (Kuznechik, 2015)`, not `M
  94208510C2C001FB01C0C21085209401
  ```
 
-6. Add your encrypted passwords in **keymap.c**. Now you can encrypt 4 passwords with any length (16, 32, 64, more not tested). 
+6. Adding passwords now in menu. Look [Usage](#usage).
 
-> Keep this information in secret. Even if there are no plaintext. 
-
-Chosen parameter `STORAGE_PASS_LEN` must be the same as the number of zeros in this array.
-
-Chosen parameter `STORAGE_SIZE` must be the same as the number of passwords in this array.
-
-```c
-const uint8_t encrypted_passwords[STORAGE_SIZE][STORAGE_PASS_LEN] = {
-    {0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,
-     0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,
-     0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,
-     0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00},
-    };
-```
-
-If you want more passwords in storage, you should:
-- add keys `RED_PASSX` into `enum red_crypto_keys` in `red_crypto.h`
-- add into `crypto_proccess_record_user` handling new keys
 
 7. Add new layer or set new keyes everywhere you want.
 
-- `RED_TEST` - execute test functions of every algorithm with. Available only with `#define TEST_FUNCTIONS_ENABLED` and `COMMAND_ENABLE=yes`. You can see output via `hid_listen`.
 - `RED_CRY_M` - execute reading password for encrypted passwords. After entering password, tap this key again. Now, you can use `RED_PASSX` keys.
 - `RED_PASSX` - where `X` is number of your password in database. After tapping, keyboard send decrypted password.
+- `RED_MENU` - exec menu to change passwords, show them, etc.
 - `RED_RNG` - use 32 times function named `tap_random_base64` from QMK. It's for generating random strings. But now random seed is not unique for every keyboard's power on.  
+- `RED_TEST` - execute test functions of every algorithm with. Available only with `#define TEST_FUNCTIONS_ENABLED` and `COMMAND_ENABLE=yes`. You can see output via `hid_listen`.
 
-8. Copy this string to function **process_record_user** in **keymap.c** before all your code. It uses "switch case" construction inside. 
+8. Add some code to **keymap.c**.
+
+Copy this function above **process_record_user**. It is initializing EEPROM of STM32.
+
+```c
+uint16_t density=0; // for test
+void keyboard_post_init_user(void) {
+    density=EEPROM_Init();
+}
+```
+
+Copy this string to function **process_record_user** in **keymap.c** before all your code. It uses "switch case" construction inside. 
 
 ```c
     uint8_t crypto_return = crypto_process_record_user(keycode, event, encrypted_passwords);
@@ -121,10 +119,19 @@ If you want more passwords in storage, you should:
 
 ## Usage
 
-Tap `RED_CRY_M`. Enter password. Tap `RED_CRY_M` again to confirm.
-Now you can use `RED_PASSX` to send decrypted passwords.
+Tap `RED_CRY_M`. Enter master key. Tap `RED_CRY_M` again to confirm.
+Now you can use `RED_PASSX` to send decrypted passwords. And you can use menu via `RED_MENU`.
 
-If you have missed while entering password, just tap `RED_CRY_M` and tap `RED_CRY_M`. 
+> If you have missed while entering password, just tap `RED_CRY_M` and tap `RED_CRY_M`. 
+
+### Adding passwords
+
+You must firstly enter master key.
+
+You should open any program with text box (notepad, telegram, html text box). Then tap `RED_MENU` and you will see menu.
+
+Choose `add password`. Enter password, tap `Enter`.
+
 
 
 ## Memory usage

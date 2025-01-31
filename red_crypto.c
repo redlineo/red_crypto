@@ -15,7 +15,7 @@ void crypto_eeprom_init() {
 
     red_read_from_storage();
 
-    if (enc_pass.init_var[0] == red_var[0] && enc_pass.init_var[1] == red_var[1] && enc_pass.init_var[2] == red_var[2] && enc_pass.password_count > 0) { // not empty eeprom
+    if (enc_pass.init_var[0] == red_var[0] && enc_pass.init_var[1] == red_var[1] && enc_pass.init_var[2] == red_var[2]) { // not empty eeprom
         dprintf("Not empty EEPROM\n");
         eeprom_inited = 1;
         // #undef INIT_STORAGE_SIZE
@@ -30,7 +30,7 @@ void crypto_eeprom_init() {
         enc_pass.init_var[2]      = 'D';
         enc_pass.version[0]       = '0';
         enc_pass.version[1]       = '6';
-        enc_pass.version[2]       = '5';
+        enc_pass.version[2]       = '9';
         enc_pass.memory_usage     = 0;
         enc_pass.password_count   = 0;
         enc_pass.storage_size     = INIT_STORAGE_SIZE;
@@ -83,8 +83,15 @@ uint8_t *encrypt_pass_kuzn(const uint8_t *new_pass, const uint8_t new_pass_lengt
     w128_t    x;
     uint8_t  *new_pass_enc;
     new_pass_enc = (uint8_t *)malloc(sizeof(uint8_t) * enc_pass.storage_pass_len);
+    // assign zeros to encrypted new password var
+    for (uint8_t byte_index = 0; byte_index < enc_pass.storage_pass_len; byte_index++) {
+        new_pass_enc = 0x00;
+    }
+    // copy new password in decrypted_passwords
+    for (uint8_t byte_index = 0; byte_index < new_pass_length; byte_index++) {
+        decrypted_passwords[enc_pass.password_count][byte_index] = new_pass[byte_index];
+    }
 
-    init_dec_pass();
     kuz_init();
 
 // using master_key for encrypting
@@ -130,7 +137,7 @@ void decrypt_pass_kuzn(void) {
     kuz_key_t key;
     w128_t    x;
 
-    init_dec_pass();
+    init_dec_pass(); // clear decrypted_passwords array
     kuz_init();
 
 // for hashing key, like a KDF algorithm
@@ -214,6 +221,21 @@ uint8_t crypto_process_record_user(uint16_t keycode, keyrecord_t *record) {
         }
     } else if (decrypted_mode) {
         switch (keycode) {
+            case RED_RST_EE:
+                if (record->event.pressed) {
+                    enc_pass.init_var[0]=0x00;
+                    crypto_eeprom_init();
+                }
+                break;
+            case RED_CRY_M:
+                if (record->event.pressed) {
+                    decrypted_mode = 0;
+                    init_dec_pass(); //clear RAM
+                    for (uint8_t i = 0; i < 32; i++) {
+                        master_key[i] = 0;
+                    }
+                }
+                break;
             case RED_TEST:
 #ifdef TEST_FUNCTIONS_ENABLED
                 if (record->event.pressed) {

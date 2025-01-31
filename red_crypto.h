@@ -11,9 +11,11 @@
 #    include "utils.h"
 #    include "red_menu.h"
 // includes for EEPROM, tested on STM32L432xx
+#ifdef STM32L432xx
 #    include "eeprom.h"
 #    include "eeprom_stm32_defs.h"
 #    include "eeprom_stm32_l4.h"
+#endif
 
 // #ifdef USE_RED_KUZNECHIK_128
 // #include "kuznechik_128bit.h"
@@ -61,6 +63,7 @@ enum red_crypto_keys {
     RED_RNG,
     RED_TEST,
     RED_LOCK, // TODO: add autolock feature
+    RED_RST_EE, // resetting EEPROM by clearing RED bytes
     RED_PASS1,
     RED_PASS2,
     RED_PASS3,
