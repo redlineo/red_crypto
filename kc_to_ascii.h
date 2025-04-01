@@ -2,6 +2,7 @@
 
 #include QMK_KEYBOARD_H
 #include "quantum.h"
+#include "red_crypto.h"
 
 #ifndef KC_TO_ASCII_H
 #    define KC_TO_ASCII_H

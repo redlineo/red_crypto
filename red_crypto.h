@@ -1,15 +1,15 @@
 // Author: redlineo, romanov.pd@gmail.com
 
 #ifndef RED_CRYPTO_H
-#    define RED_CRYPTO_H
+#define RED_CRYPTO_H
 
 #include QMK_KEYBOARD_H
 #include "quantum.h"
 
 // includes of red_crypto
-#    include "kc_to_ascii.h"
-#    include "utils.h"
-#    include "red_menu.h"
+#include "kc_to_ascii.h"
+#include "utils.h"
+#include "red_menu.h"
 // includes for EEPROM, tested on STM32L432xx
 #ifdef STM32L432xx
 #    include "eeprom.h"
@@ -17,37 +17,42 @@
 #    include "eeprom_stm32_l4.h"
 #endif
 
+// not tested!!!
 // #ifdef USE_RED_KUZNECHIK_128
 // #include "kuznechik_128bit.h"
 // #endif
 
-#    ifdef USE_RED_KUZNECHIK_8
-#        include "kuznechik_8bit.h"
-#        ifdef USE_SHA256_KEY
-#            include "sha256.h"
-#        endif
-#    endif
+#define MASTER_KEY_LEN 32
 
-#    ifdef USE_RED_AES_256
-#        include "aes.h"
+#ifdef USE_RED_KUZNECHIK_8
+#    include "kuznechik_8bit.h"
+#    ifdef USE_SHA256_KEY
+#        undef MASTER_KEY_LEN
+#        define MASTER_KEY_LEN 128
+#        include "sha256.h"
 #    endif
+#endif
 
-#    define MAX_KEY_LEN 128
-#    define BLOCK_SIZE 16
+#ifdef USE_RED_AES_256
+#    include "aes.h"
+#endif
 
-#    ifndef INIT_STORAGE_SIZE
-#        define INIT_STORAGE_SIZE 5
+#define MAX_KEY_LEN 128
+#define BLOCK_SIZE 16
+
+#ifndef INIT_STORAGE_SIZE
+#    define INIT_STORAGE_SIZE 5
+#endif
+
+#ifndef INIT_STORAGE_PASS_LEN
+#    define INIT_STORAGE_PASS_LEN 64
+#endif
+
+#ifdef INIT_STORAGE_PASS_LEN
+#    if (INIT_STORAGE_PASS_LEN % 16 != 0)
+#        error "Password length must be multiply of 16 (16,32,64...)"
 #    endif
-
-#    ifndef INIT_STORAGE_PASS_LEN
-#        define INIT_STORAGE_PASS_LEN 64
-#    endif
-
-#    ifdef INIT_STORAGE_PASS_LEN
-#        if (INIT_STORAGE_PASS_LEN % 16 != 0)
-#            error "Password length must be multiply of 16 (16,32,64...)"
-#        endif
-#    endif
+#endif
 
 // example for encrypted 64 byte password
 //  const uint8_t red_enc_pass[STORAGE_SIZE][STORAGE_PASS_LEN] = {
@@ -62,7 +67,7 @@ enum red_crypto_keys {
     RED_MENU,
     RED_RNG,
     RED_TEST,
-    RED_LOCK, // TODO: add autolock feature
+    RED_LOCK,   // TODO: add autolock feature
     RED_RST_EE, // resetting EEPROM by clearing RED bytes
     RED_PASS1,
     RED_PASS2,
@@ -73,13 +78,19 @@ enum red_crypto_keys {
     RED_PASS7,
     RED_PASS8,
     RED_PASS9,
-    RED_PASS10
+    RED_PASS10,
+};
+
+enum red_crypto_states {
+    RED_IDLE = 0,
+    RED_KEY_READ,
+    RED_MENU_EXIT,
 };
 
 // uint8_t storage_size     = INIT_STORAGE_SIZE;
 // uint8_t storage_pass_len = INIT_STORAGE_PASS_LEN;
-#    define EEPROM_PASS_OFFSET 3 + 3 + 1 + 1 + 4 + 1
-#    define STORAGE_SIZE (EEPROM_PASS_OFFSET + INIT_STORAGE_SIZE * INIT_STORAGE_PASS_LEN)
+#define EEPROM_PASS_OFFSET 3 + 3 + 1 + 1 + 4 + 1
+#define STORAGE_SIZE (EEPROM_PASS_OFFSET + INIT_STORAGE_SIZE * INIT_STORAGE_PASS_LEN)
 
 typedef union {
     uint8_t raw[STORAGE_SIZE];

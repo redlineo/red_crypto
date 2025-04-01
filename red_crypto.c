@@ -2,7 +2,17 @@
 
 #include "red_crypto.h"
 
-uint8_t eeprom_inited = 0;
+uint8_t   eeprom_inited = 0;
+uint8_t  *master_key; // you can use key any length with SHA256 by defining MASTER_KEY_LEN, kuznechik use only 32byte
+uint8_t **decrypted_passwords;
+uint8_t  *new_pass_enc;
+#ifdef USE_SHA256_KEY
+uint8_t master_key_hash[32];
+#endif
+uint8_t count_char_key = 0;
+uint8_t crypto_mode    = 0;
+uint8_t decrypted_mode = 0;
+uint8_t red_menu_mode  = 0;
 
 void crypto_eeprom_init() {
     uint8_t red_var[3] = {'R', 'E', 'D'};
@@ -29,8 +39,8 @@ void crypto_eeprom_init() {
         enc_pass.init_var[1]      = 'E';
         enc_pass.init_var[2]      = 'D';
         enc_pass.version[0]       = '0';
-        enc_pass.version[1]       = '6';
-        enc_pass.version[2]       = '9';
+        enc_pass.version[1]       = '7';
+        enc_pass.version[2]       = '1';
         enc_pass.memory_usage     = 0;
         enc_pass.password_count   = 0;
         enc_pass.storage_size     = INIT_STORAGE_SIZE;
@@ -45,48 +55,11 @@ void crypto_eeprom_init() {
     }
 }
 
-uint8_t **decrypted_passwords;
-
-// initialize array "decrypted_passwords" with 0x00
-void init_dec_pass(void) {
-    decrypted_passwords = (uint8_t **)malloc(sizeof(uint8_t *) * enc_pass.storage_size);
-    for (uint8_t i = 0; i < enc_pass.storage_size; i++) {
-        decrypted_passwords[i] = (uint8_t *)malloc(sizeof(uint8_t) * enc_pass.storage_pass_len);
-    }
-
-    for (uint8_t i = 0; i < enc_pass.storage_size; i++) {
-        for (uint8_t j = 0; j < enc_pass.storage_pass_len; j++) {
-            decrypted_passwords[i][j] = 0x00;
-        }
-    }
-}
-
-// you can use key any length with SHA256, kuznechik use only 32byte
-#ifdef USE_SHA256_KEY
-uint8_t master_key[128] = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
-#endif
-#ifndef USE_SHA256_KEY
-uint8_t master_key[32] = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
-#endif
-
-uint8_t count_char_key = 0;
-
-uint8_t crypto_mode = 0;
-
-uint8_t decrypted_mode = 0;
-
-uint8_t red_menu_mode = 0;
-
 // encrypt new password
 uint8_t *encrypt_pass_kuzn(const uint8_t *new_pass, const uint8_t new_pass_length) {
     kuz_key_t key;
     w128_t    x;
-    uint8_t  *new_pass_enc;
-    new_pass_enc = (uint8_t *)malloc(sizeof(uint8_t) * enc_pass.storage_pass_len);
-    // assign zeros to encrypted new password var
-    for (uint8_t byte_index = 0; byte_index < enc_pass.storage_pass_len; byte_index++) {
-        new_pass_enc = 0x00;
-    }
+    new_pass_enc = red_init_array(enc_pass.storage_pass_len, 0x00); // assign zeros to encrypted new password var
     // copy new password in decrypted_passwords
     for (uint8_t byte_index = 0; byte_index < new_pass_length; byte_index++) {
         decrypted_passwords[enc_pass.password_count][byte_index] = new_pass[byte_index];
@@ -94,19 +67,13 @@ uint8_t *encrypt_pass_kuzn(const uint8_t *new_pass, const uint8_t new_pass_lengt
 
     kuz_init();
 
-// using master_key for encrypting
+    // using master_key for encrypting
 #ifdef USE_SHA256_KEY
-    SHA256_CTX ctx;
-    sha256_init(&ctx);
-    sha256_update(&ctx, master_key, red_min_len(u_strlen(master_key), MAX_KEY_LEN));
-    BYTE result_key[SHA256_BLOCK_SIZE];
-    sha256_final(&ctx, result_key);
-    red_print_hex(result_key);
-    kuz_set_decrypt_key(&key, result_key);
+    kuz_set_encrypt_key(&key, hashing_string(master_key));
 #endif
 // if you don't have enough FLASH in MCU
 #ifndef USE_SHA256_KEY
-    kuz_set_decrypt_key(&key, master_key);
+    kuz_set_encrypt_key(&key, master_key);
 #endif
 
 #ifdef USE_RED_CRY_DEBUG
@@ -137,23 +104,18 @@ void decrypt_pass_kuzn(void) {
     kuz_key_t key;
     w128_t    x;
 
-    init_dec_pass(); // clear decrypted_passwords array
+    decrypted_passwords = red_init_array_2d(enc_pass.storage_size, enc_pass.storage_pass_len, 0x00); // clear decrypted passwords
     kuz_init();
 
 // for hashing key, like a KDF algorithm
 #ifdef USE_SHA256_KEY
-    SHA256_CTX ctx;
-    sha256_init(&ctx);
-    sha256_update(&ctx, master_key, red_min_len(u_strlen(master_key), MAX_KEY_LEN));
-    BYTE result_key[SHA256_BLOCK_SIZE];
-    sha256_final(&ctx, result_key);
-    red_print_hex(result_key);
-    kuz_set_decrypt_key(&key, result_key);
+    kuz_set_decrypt_key(&key, hashing_string(master_key));
 #endif
 // if you don't have enough FLASH in MCU
 #ifndef USE_SHA256_KEY
     kuz_set_decrypt_key(&key, master_key);
 #endif
+
     // decrypting all passwords in storage
     for (uint8_t password_index = 0; password_index < enc_pass.storage_size; password_index++) {
 #ifdef USE_RED_CRY_DEBUG
@@ -199,7 +161,7 @@ uint8_t crypto_process_record_user(uint16_t keycode, keyrecord_t *record) {
             case RED_CRY_M:
                 if (record->event.pressed) {
 #ifdef USE_RED_CRY_DEBUG
-                    red_print_int(master_key);
+                    red_print_int(master_key, MASTER_KEY_LEN);
 #endif
                     crypto_mode    = 0;
                     count_char_key = 0;
@@ -214,7 +176,7 @@ uint8_t crypto_process_record_user(uint16_t keycode, keyrecord_t *record) {
         }
     } else if (decrypted_mode && red_menu_mode) {
         uint8_t key_return = draw_red_menu(keycode, record);
-        if (key_return == 2) {
+        if (key_return == RED_MENU_EXIT) {
             red_menu_mode = 0;
         } else {
             return key_return;
@@ -223,17 +185,15 @@ uint8_t crypto_process_record_user(uint16_t keycode, keyrecord_t *record) {
         switch (keycode) {
             case RED_RST_EE:
                 if (record->event.pressed) {
-                    enc_pass.init_var[0]=0x00;
+                    enc_pass.init_var[0] = 0x00;
                     crypto_eeprom_init();
                 }
                 break;
             case RED_CRY_M:
                 if (record->event.pressed) {
-                    decrypted_mode = 0;
-                    init_dec_pass(); //clear RAM
-                    for (uint8_t i = 0; i < 32; i++) {
-                        master_key[i] = 0;
-                    }
+                    decrypted_mode      = 0;
+                    decrypted_passwords = red_init_array_2d(enc_pass.storage_size, enc_pass.storage_pass_len, 0x00); // clear decrypted passwords
+                    master_key          = red_init_array(MASTER_KEY_LEN, 0);
                 }
                 break;
             case RED_TEST:
@@ -259,52 +219,52 @@ uint8_t crypto_process_record_user(uint16_t keycode, keyrecord_t *record) {
                 }
                 break;
             case RED_PASS1:
-                if (record->event.pressed && enc_pass.password_count <= 1) {
+                if (record->event.pressed && enc_pass.password_count >= 1) {
                     red_send_chars_pass(decrypted_passwords[0]);
                 }
                 break;
             case RED_PASS2:
-                if (record->event.pressed && enc_pass.password_count <= 2) {
+                if (record->event.pressed && enc_pass.password_count >= 2) {
                     red_send_chars_pass(decrypted_passwords[1]);
                 }
                 break;
             case RED_PASS3:
-                if (record->event.pressed && enc_pass.password_count <= 3) {
+                if (record->event.pressed && enc_pass.password_count >= 3) {
                     red_send_chars_pass(decrypted_passwords[2]);
                 }
                 break;
             case RED_PASS4:
-                if (record->event.pressed && enc_pass.password_count <= 4) {
+                if (record->event.pressed && enc_pass.password_count >= 4) {
                     red_send_chars_pass(decrypted_passwords[3]);
                 }
                 break;
             case RED_PASS5:
-                if (record->event.pressed && enc_pass.password_count <= 5) {
+                if (record->event.pressed && enc_pass.password_count >= 5) {
                     red_send_chars_pass(decrypted_passwords[4]);
                 }
                 break;
             case RED_PASS6:
-                if (record->event.pressed && enc_pass.password_count <= 6) {
+                if (record->event.pressed && enc_pass.password_count >= 6) {
                     red_send_chars_pass(decrypted_passwords[5]);
                 }
                 break;
             case RED_PASS7:
-                if (record->event.pressed && enc_pass.password_count <= 7) {
+                if (record->event.pressed && enc_pass.password_count >= 7) {
                     red_send_chars_pass(decrypted_passwords[6]);
                 }
                 break;
             case RED_PASS8:
-                if (record->event.pressed && enc_pass.password_count <= 8) {
+                if (record->event.pressed && enc_pass.password_count >= 8) {
                     red_send_chars_pass(decrypted_passwords[7]);
                 }
                 break;
             case RED_PASS9:
-                if (record->event.pressed && enc_pass.password_count <= 9) {
+                if (record->event.pressed && enc_pass.password_count >= 9) {
                     red_send_chars_pass(decrypted_passwords[8]);
                 }
                 break;
             case RED_PASS10:
-                if (record->event.pressed && enc_pass.password_count == 10) {
+                if (record->event.pressed && enc_pass.password_count >= 10) {
                     red_send_chars_pass(decrypted_passwords[9]);
                 }
                 break;
@@ -321,15 +281,13 @@ uint8_t crypto_process_record_user(uint16_t keycode, keyrecord_t *record) {
             case RED_CRY_M:
                 if (record->event.pressed) {
                     crypto_eeprom_init();
-                    crypto_mode = 1; // to enter in crypto mode block code above
+                    crypto_mode = 1; // to enter in crypto mode and unlock other keys
                     // clearing readed key
-                    for (uint8_t i = 0; i < 32; i++) {
-                        master_key[i] = 0;
-                    }
+                    master_key = red_init_array(MASTER_KEY_LEN, 0);
                     // dprintf("%d", keycode);
                 }
                 break;
         }
     }
-    return 0;
+    return RED_IDLE;
 }

@@ -21,8 +21,8 @@ uint8_t  count_readed     = 0;
 uint8_t  return_key       = 0;
 uint8_t *enc_pass_new;
 
-uint8_t readed_key_new[128] = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
-uint8_t count_char_key_new  = 0;
+uint8_t *readed_key_new;
+uint8_t  count_char_key_new = 0;
 
 // read new key
 uint8_t read_new_key(uint16_t keycode, keyrecord_t *record) {
@@ -44,6 +44,7 @@ uint8_t read_new_key(uint16_t keycode, keyrecord_t *record) {
 }
 
 // clang-format on
+// return values
 // 0 idle
 // 1 get key input
 // 2 exit menu
@@ -75,7 +76,9 @@ uint8_t draw_red_menu(uint16_t keycode, keyrecord_t *record) {
                 readed_option[0] = CHANGE_PASS_NAME;
             }
             if (readed_option[0] == ASCII_LOW_6) {
-                readed_option[0] = ADD_NEW_PASS;
+                readed_option[0]   = ADD_NEW_PASS;
+                readed_key_new     = red_init_array(MAX_KEY_LEN, 0x00);
+                count_char_key_new = 0;
             }
             if (return_key == 1) {
                 send_string(SS_DOWN(X_LCTL) SS_DOWN(X_A) SS_UP(X_LCTL) SS_UP(X_A) SS_TAP(X_BACKSPACE));
