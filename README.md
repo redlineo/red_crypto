@@ -1,4 +1,4 @@
-# RED_CRYPTO ver 0.6.8
+# RED_CRYPTO ver 0.7.1
 
 ## Description
 
