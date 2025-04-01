@@ -108,7 +108,7 @@ typedef union {
 red_crypto_storage_eeprom enc_pass;
 
 uint8_t  crypto_process_record_user(uint16_t keycode, keyrecord_t *record);
-uint8_t *encrypt_pass_kuzn(const uint8_t *new_pass, const uint8_t new_pass_length);
+uint8_t *encrypt_pass_kuzn(const uint8_t *new_pass, const uint8_t new_pass_length, const uint8_t password_index);
 void     crypto_eeprom_init(void);
 
 #endif

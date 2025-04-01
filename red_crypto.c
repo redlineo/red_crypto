@@ -40,7 +40,7 @@ void crypto_eeprom_init() {
         enc_pass.init_var[2]      = 'D';
         enc_pass.version[0]       = '0';
         enc_pass.version[1]       = '7';
-        enc_pass.version[2]       = '1';
+        enc_pass.version[2]       = '2';
         enc_pass.memory_usage     = 0;
         enc_pass.password_count   = 0;
         enc_pass.storage_size     = INIT_STORAGE_SIZE;
@@ -56,13 +56,19 @@ void crypto_eeprom_init() {
 }
 
 // encrypt new password
-uint8_t *encrypt_pass_kuzn(const uint8_t *new_pass, const uint8_t new_pass_length) {
+uint8_t *encrypt_pass_kuzn(const uint8_t *new_pass, const uint8_t new_pass_length, const uint8_t password_index) {
     kuz_key_t key;
     w128_t    x;
     new_pass_enc = red_init_array(enc_pass.storage_pass_len, 0x00); // assign zeros to encrypted new password var
     // copy new password in decrypted_passwords
-    for (uint8_t byte_index = 0; byte_index < new_pass_length; byte_index++) {
-        decrypted_passwords[enc_pass.password_count][byte_index] = new_pass[byte_index];
+    if (password_index == -1) {
+        for (uint8_t byte_index = 0; byte_index < new_pass_length; byte_index++) {
+            decrypted_passwords[enc_pass.password_count][byte_index] = new_pass[byte_index];
+        }
+    } else {
+        for (uint8_t byte_index = 0; byte_index < new_pass_length; byte_index++) {
+            decrypted_passwords[password_index][byte_index] = new_pass[byte_index];
+        }
     }
 
     kuz_init();

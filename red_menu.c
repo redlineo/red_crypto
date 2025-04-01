@@ -19,6 +19,7 @@ enum menu_options {
 uint8_t  readed_option[1] = {255};
 uint8_t  count_readed     = 0;
 uint8_t  return_key       = 0;
+uint8_t  password_index   = -1;
 uint8_t *enc_pass_new;
 
 uint8_t *readed_key_new;
@@ -76,34 +77,53 @@ uint8_t draw_red_menu(uint16_t keycode, keyrecord_t *record) {
                 readed_option[0] = CHANGE_PASS_NAME;
             }
             if (readed_option[0] == ASCII_LOW_6) {
-                readed_option[0]   = ADD_NEW_PASS;
-                readed_key_new     = red_init_array(MAX_KEY_LEN, 0x00);
-                count_char_key_new = 0;
+                readed_option[0] = ADD_NEW_PASS;
             }
             if (return_key == 1) {
                 send_string(SS_DOWN(X_LCTL) SS_DOWN(X_A) SS_UP(X_LCTL) SS_UP(X_A) SS_TAP(X_BACKSPACE));
                 return 1;
             }
+            readed_key_new     = red_init_array(MAX_KEY_LEN, 0x00); // init or reinit readed keys
+            count_char_key_new = 0;                                 // init or reinit counted keys
             break;
         }
         case SHOW_PASS_NAMES:
         case SHOW_MEMORY_USAGE:
         case CHANGE_MASTER_KEY:
         case CHANGE_PASS_IN_STORAGE:
+            send_string("Which one? [0-");
+            send_byte(enc_pass.password_count);
+            send_string("]: ");
+            password_index   = kc_to_ascii(keycode, record, readed_option, &count_readed);
+            count_readed     = 0;
+            readed_option[0] = READING_PASS;
+            send_string("\nWrite new password. Tap `Enter` for confirm\n");
+            break;
         case CHANGE_PASS_NAME:
         case SAVE_NEW_PASS:
             enc_pass_new = (uint8_t *)malloc(sizeof(uint8_t) * enc_pass.storage_pass_len);
-            enc_pass_new = encrypt_pass_kuzn(readed_key_new, count_char_key_new);
-            for (uint8_t new_pass_index = 0; new_pass_index < enc_pass.storage_pass_len; new_pass_index++) {
-                enc_pass.passwords[enc_pass.password_count * enc_pass.storage_pass_len + new_pass_index] = enc_pass_new[new_pass_index];
+            enc_pass_new = encrypt_pass_kuzn(readed_key_new, count_char_key_new, password_index);
+            if (password_index == -1) {
+                for (uint8_t new_pass_index = 0; new_pass_index < enc_pass.storage_pass_len; new_pass_index++) {
+                    enc_pass.passwords[enc_pass.password_count * enc_pass.storage_pass_len + new_pass_index] = enc_pass_new[new_pass_index];
+                }
+                enc_pass.password_count++;
+            } else {
+                for (uint8_t new_pass_index = password_index; new_pass_index < enc_pass.storage_pass_len; new_pass_index++) {
+                    enc_pass.passwords[enc_pass.password_count * enc_pass.storage_pass_len + new_pass_index] = enc_pass_new[new_pass_index];
+                }
             }
-            enc_pass.password_count++;
             // eeconfig_update_user_datablock(enc_pass.raw);
             red_write_to_storage();
             send_string("Successful adding new key on keycode RED_PASS");
-            send_byte(enc_pass.password_count);
+            if (password_index == -1) {
+                send_byte(enc_pass.password_count);
+            } else {
+                send_byte(password_index);
+            }
             send_string("\n");
-            send_string(SS_DELAY(1000));
+            send_string(SS_DELAY(300));
+            password_index   = -1;
             readed_option[0] = 255;
             break;
         case READING_PASS:
