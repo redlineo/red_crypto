@@ -88,9 +88,12 @@ uint8_t draw_red_menu(uint16_t keycode, keyrecord_t *record) {
             }
             break;
         }
-        case SHOW_PASS_NAMES:   // TODO
+        case SHOW_PASS_NAMES: // TODO
+            break;
         case SHOW_MEMORY_USAGE: // TODO
+            break;
         case CHANGE_MASTER_KEY: // TODO
+            break;
         case CHANGE_PASS_IN_STORAGE:
             send_string("Which one? Write index in hex [0-9a-f]: "); // now you can change first 16 passwords on the fly
                                                                      // to read more, I need read keys as integers, or bytes
@@ -122,6 +125,7 @@ uint8_t draw_red_menu(uint16_t keycode, keyrecord_t *record) {
             }
             break;
         case CHANGE_PASS_NAME: // TODO
+            break;
         case SAVE_NEW_PASS:
             enc_pass_new       = (uint8_t *)malloc(sizeof(uint8_t) * enc_pass.storage_pass_len);
             enc_pass_new       = encrypt_pass_kuzn(readed_key_new, count_char_key_new, password_index);
@@ -165,7 +169,7 @@ uint8_t draw_red_menu(uint16_t keycode, keyrecord_t *record) {
             break;
         default: // SHOW_MAIN_MENU
             CLEAR_MENU_MACROS;
-            send_string("RED_CRYPTO MENU:\n0-EXIT\n1-Show password's names\n2-Show memory usage\n3-Change master key\n4-Change password in storage\n5-Change password's name\n6-Add new password\n");
+            send_string("RED_CRYPTO MENU:\n0-EXIT\nX-Show password's names\nX-Show memory usage\nX-Change master key\n4-Change password in storage\nX-Change password's name\n6-Add new password\n");
             send_string("Choose option(0-6): ");
             readed_option[0] = READ_USER_CHOICE;
             break;
