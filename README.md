@@ -5,8 +5,8 @@
 Password manager for (almost) any QMK-compatible keyboards. 
 
 There are two versions:
-- hard-coded passwords in `keymap.c`, change branch to `hard-coded-storage` or releases
-- storing passwords in EEPROM with adding and editing via `RED_MENU`, change branch to `eeprom-storage` or releases
+- hard-coded passwords in `keymap.c`, change branch to `hard_coded_storage` or releases
+- storing passwords in EEPROM with adding and editing via `RED_MENU`, change branch to `eeprom_storage` or releases
 
 ## Alert
 
