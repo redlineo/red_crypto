@@ -8,10 +8,6 @@
 
 #    include "kc_to_ascii.h"
 
-// #ifdef USE_RED_KUZNECHIK_128
-// #include "kuznechik_128bit.h"
-// #endif
-
 #    ifdef USE_RED_KUZNECHIK_8
 #        include "kuznechik_8bit.h"
 #        ifdef USE_SHA256_KEY

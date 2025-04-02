@@ -61,6 +61,15 @@ size_t min_len(size_t a, size_t b) {
         return b;
 }
 
+uint8_t red_strlen_printable(uint8_t *str_printable, uint8_t max_len) {
+    uint8_t result = 0;
+    while (result < max_len && *str_printable != '\0') {
+        result++;
+        str_printable++;
+    }
+    return result;
+}
+
 void decrypt_pass_kuzn(const uint8_t encrypted_passwords[STORAGE_SIZE][STORAGE_PASS_LEN]) {
     kuz_key_t key;
     w128_t    x;
@@ -70,7 +79,7 @@ void decrypt_pass_kuzn(const uint8_t encrypted_passwords[STORAGE_SIZE][STORAGE_P
 #ifdef USE_SHA256_KEY
     SHA256_CTX ctx;
     sha256_init(&ctx);
-    sha256_update(&ctx, readed_key, min_len(u_strlen(readed_key), MAX_KEY_LEN));
+    sha256_update(&ctx, readed_key, red_strlen_printable(readed_key, MAX_KEY_LEN));
     BYTE result_key[SHA256_BLOCK_SIZE];
     sha256_final(&ctx, result_key);
     print_hex(result_key);
@@ -112,18 +121,6 @@ void decrypt_pass_kuzn(const uint8_t encrypted_passwords[STORAGE_SIZE][STORAGE_P
         }
     }
 };
-
-// TODO: add encrypt new passwords with binding on new keys
-// and storing all these to EEPROM
-// void encrypt_pass_kuzn(){
-// kuz_set_encrypt_key(&key,readed_key);
-// for (uint8_t i=0; i<16; i++) {
-//     x.b[i] = pass[i];
-// }
-// kuz_encrypt_block(&key,&x);
-// printf("encrypted\t="); print_w128(&x);
-// print_chars_w128(&x);
-// }
 
 void send_chars_pass(uint8_t *out) {
     for (uint8_t i = 0; i < STORAGE_PASS_LEN && out[i] != 0; i++) {

@@ -2,21 +2,26 @@
 
 ## Description
 
-Password manager for (almost) any QMK keyboards. 
-Supports cryptographic algorithms:
+Password manager for (almost) any QMK-compatible keyboards. 
+
+There are two versions:
+- hard-coded passwords in `keymap.c`, change branch to `hard_coded_storage` or releases (YOU ARE HERE)
+- storing passwords in EEPROM with adding and editing via `RED_MENU`, change branch to `eeprom_storage` or releases
+
+### Supports cryptographic algorithms
+
 - [x] Kuznechik (Russian GOST cipher)
 - [x] SHA256 (for hashing key)
 - [ ] Streebog (for hashing key, Russian GOST hash algorithm)
 - [ ] AES256
 
-## Features and plans
+### Features and plans
 
 - [x] add read all ASCII-printable symbols for key
 - [x] add Kuznechik lib for non 128 bit MCU
 - [x] use SHA256 for hashing key to set key length to 32 bytes
 - [x] expand stored passwords length from 16 byte to 64
 - [x] expand number of stored passwords (manual adding new keys)
-- [ ] write new passwords to EEPROM without flashing firmware
 - [ ] add CBC mode for Kuznechik, it will increase security
 
 ## Installation
