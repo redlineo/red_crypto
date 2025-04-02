@@ -13,7 +13,7 @@ uint8_t write_keycode(uint8_t up_key, uint8_t low_key, keyrecord_t *record, uint
             readed_key[*count_char_key] = low_key;
         }
 #ifdef USE_RED_CRY_DEBUG
-        dprintf("%d", readed_key[*count_char_key]);
+        dprintf("%d ", readed_key[*count_char_key]);
 #endif
         *count_char_key = *count_char_key + 1;
     }

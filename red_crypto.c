@@ -40,7 +40,7 @@ void crypto_eeprom_init() {
         enc_pass.init_var[2]      = 'D';
         enc_pass.version[0]       = '0';
         enc_pass.version[1]       = '7';
-        enc_pass.version[2]       = '2';
+        enc_pass.version[2]       = '3';
         enc_pass.memory_usage     = 0;
         enc_pass.password_count   = 0;
         enc_pass.storage_size     = INIT_STORAGE_SIZE;
@@ -61,11 +61,12 @@ uint8_t *encrypt_pass_kuzn(const uint8_t *new_pass, const uint8_t new_pass_lengt
     w128_t    x;
     new_pass_enc = red_init_array(enc_pass.storage_pass_len, 0x00); // assign zeros to encrypted new password var
     // copy new password in decrypted_passwords
-    if (password_index == -1) {
+    if (password_index == 255) {
         for (uint8_t byte_index = 0; byte_index < new_pass_length; byte_index++) {
             decrypted_passwords[enc_pass.password_count][byte_index] = new_pass[byte_index];
         }
     } else {
+        decrypted_passwords[password_index] = red_init_array(enc_pass.storage_pass_len, 0x00);
         for (uint8_t byte_index = 0; byte_index < new_pass_length; byte_index++) {
             decrypted_passwords[password_index][byte_index] = new_pass[byte_index];
         }

@@ -258,13 +258,14 @@ void kuz_decrypt_block(kuz_key_t *key, void *blk)
 void print_w128(w128_t *x)
 {
 	int i;
-	
+	printf("\n");
 	for (i = 0; i < 16; i++)
 		printf(" %02X", x->b[i]);
 	printf("\n");
 };
 
 void print_chars_w128(w128_t *x) {
+	printf("\n");
     for (uint8_t i = 0; i < 16; i++) {
         if (x->b[i] == 0x00) break;
         printf("%c", x->b[i]);
