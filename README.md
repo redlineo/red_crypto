@@ -1,4 +1,4 @@
-# RED_CRYPTO ver 0.5.0
+# RED_CRYPTO ver 0.5.0-lite
 
 ## Description
 
