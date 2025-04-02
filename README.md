@@ -12,7 +12,7 @@ There are two versions:
 
 > Now red_crypto supports STM32 EEPROM.
 > 
-> Tested on Keychron K9 Pro with STM32L4xx with virtual EEPROM
+> Tested on Keychron K9 Pro with STM32L432xx with virtual EEPROM
 
 See chapter about [Memory issue](#memory-issue) and [Memory usage](#memory-usage).
 I recommend using at the beginning internal FLASH or EEPROM, because you have some resources not to need external memory. Or you can do not change your passwords, if there are very strong one's.
