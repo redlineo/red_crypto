@@ -3,10 +3,11 @@
 ## Description
 
 Password manager for (almost) any QMK-compatible keyboards. 
+It is lightweight version of `RED_CRYPTO` lib.
 
 There are two versions:
-- hard-coded passwords in `keymap.c`, change branch to `hard_coded_storage` or releases (YOU ARE HERE)
-- storing passwords in EEPROM with adding and editing via `RED_MENU`, change branch to `eeprom_storage` or releases
+- hard-coded passwords in `keymap.c`, change branch to [`hard_coded_storage`](https://github.com/redlineo/red_crypto/tree/hard_coded_storage) or releases (YOU ARE HERE)
+- storing passwords in EEPROM with adding and editing via `RED_MENU`, change branch to [`eeprom_storage`](https://github.com/redlineo/red_crypto/tree/eeprom_storage) or releases
 
 ### Supports cryptographic algorithms
 
